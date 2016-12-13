@@ -9,7 +9,7 @@ fi
 JAVA_ARGS=""
 MAIN="person.dufei.utils.main.Model2RequestJsonMain"
 
-ARGS=`getopt -o u:t: --long model2req,model-url:,token: -- "$@"`
+ARGS=`getopt -o u:t:f:s:b: --long model2req,tsv2req,model-url:,token:,tsv-file:,schema-json:,batch-size: -- "$@"`
 if [ $? != 0 ]; then
     echo "terminating..."
     exit 1
@@ -20,8 +20,12 @@ fi
 while [ -n "$1" ]; do
     case "$1" in
         --model2req) MAIN="person.dufei.utils.main.Model2RequestJsonMain" ; shift 1 ;;
+        --tsv2req) MAIN="person.dufei.utils.main.TSV2RequestJsonMain" ; shift 1 ;;
         -u|--model-url) JAVA_ARGS="$JAVA_ARGS -DmodelUrl=$2" ; shift 2 ;;
         -t|--token) JAVA_ARGS="$JAVA_ARGS -DaccessToken=$2" ; shift 2 ;;
+        -f|--tsv-file) JAVA_ARGS="$JAVA_ARGS -DtsvPath=$2" ; shift 2 ;;
+        -s|--schema-json) JAVA_ARGS="$JAVA_ARGS -DschemaJson=$2" ; shift 2 ;;
+        -b|--batch-size) JAVA_ARGS="$JAVA_ARGS -DbatchSize=$2" ; shift 2 ;;
         --) shift ; break ;;
         *) echo "unknown argument $1, terminating..." ; exit 1 ;;
     esac

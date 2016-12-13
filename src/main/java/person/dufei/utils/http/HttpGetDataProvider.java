@@ -27,7 +27,7 @@ public class HttpGetDataProvider {
             return EntityUtils.toString(response.getEntity(), UTF8);
         } catch (IOException e) {
             log.error("caught exception when getting {}", url, e);
-            throw new RuntimeException("unable to get " + url);
+            throw new RuntimeException("unable to get " + url, e);
         }
     }
 
