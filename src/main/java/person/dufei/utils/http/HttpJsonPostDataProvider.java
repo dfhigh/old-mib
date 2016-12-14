@@ -17,13 +17,11 @@ import java.nio.charset.Charset;
 public class HttpJsonPostDataProvider {
 
     private static final Charset UTF8 = Charset.forName("utf-8");
-    private static final ContentType TP = ContentType.TEXT_PLAIN.withCharset(UTF8);
-    private static final ContentType AJ = ContentType.APPLICATION_JSON.withCharset(UTF8);
 
-    public static String getData(String url, String json) {
+    public static String getData(String url, String json, ContentType ct) {
         try (CloseableHttpClient http = HttpClients.createDefault()) {
             HttpPost post = new HttpPost(url);
-            post.setEntity(new StringEntity(json, TP));
+            post.setEntity(new StringEntity(json, ct.withCharset(UTF8)));
             CloseableHttpResponse response = http.execute(post);
             if (response.getStatusLine().getStatusCode() != HttpStatus.SC_OK) {
                 log.error("got response {} when posting {} to {}", response.getStatusLine(), json, url);
