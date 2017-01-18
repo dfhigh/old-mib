@@ -50,7 +50,8 @@ public class PredictorTSV2RequestJsonConverter {
             item.setId(String.valueOf(i));
             Map<String, String> map = Maps.newHashMapWithExpectedSize(schemas.size());
             List<String> row = data.get(i);
-            for (int j = 0; j < schemas.size(); j++) {
+            int len = Math.min(schemas.size(), row.size());
+            for (int j = 0; j < len; j++) {
                 map.put(schemas.get(j).getName(), row.get(j));
             }
             item.setRawFeatures(map);
