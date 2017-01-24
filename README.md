@@ -1,5 +1,5 @@
 # **工具依赖**
-maven
+maven<br/>
 jdk 1.8
 
 # **使用方法**
@@ -30,5 +30,10 @@ jdk 1.8
 
 # **示例**
 ```
-./target/bin/mib --tsv2req -t 123456 -f /Users/dufei/Documents/1212/bank_data_with_date -s /Users/dufei/Documents/1212/model_28_schema.json -b 400 > /Users/dufei/Documents/1212/bank_requests
+./target/bin/mib --tsv2req \
+-t 123456 \
+-f /Users/dufei/Documents/1212/bank_data_with_date \
+-s /Users/dufei/Documents/1212/model_28_schema.json \
+-b 400 \
+> /Users/dufei/Documents/1212/bank_requests
 ```
