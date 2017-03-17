@@ -1,11 +1,10 @@
-package person.dufei.utils.request;
+package person.dufei.utils.profiler;
 
 import com._4paradigm.predictor.PredictorRequest;
 import com._4paradigm.predictor.PredictorResponse;
-import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.introspect.VisibilityChecker;
 import com.google.common.collect.Lists;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.http.entity.ContentType;
 import person.dufei.utils.convert.PredictorTSV2RequestJsonConverter;
 import person.dufei.utils.http.HttpJsonPostDataProvider;
@@ -16,12 +15,10 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-public class PredictorRequestSender {
+@Slf4j
+public class PredictorProfiler {
 
-    private static final ObjectMapper OM = new ObjectMapper().setVisibility(VisibilityChecker.Std.defaultInstance()
-            .withIsGetterVisibility(JsonAutoDetect.Visibility.NONE)
-            .withGetterVisibility(JsonAutoDetect.Visibility.NONE)
-            .withFieldVisibility(JsonAutoDetect.Visibility.PUBLIC_ONLY));
+    private static final ObjectMapper OM = new ObjectMapper();
 
     private static volatile boolean stop = false;
 
@@ -44,6 +41,7 @@ public class PredictorRequestSender {
                             PredictorResponse res = OM.readValue(HttpJsonPostDataProvider.getData(url, json, ContentType.TEXT_PLAIN), PredictorResponse.class);
                             responses[Integer.parseInt(req.getRequestId())] = res;
                         } catch (Exception e) {
+                            log.error("exception of http", e);
                             responses[Integer.parseInt(req.getRequestId())] = null;
                         }
                     }

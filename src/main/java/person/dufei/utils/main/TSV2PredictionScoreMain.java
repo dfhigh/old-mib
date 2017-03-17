@@ -1,7 +1,7 @@
 package person.dufei.utils.main;
 
 import lombok.extern.slf4j.Slf4j;
-import person.dufei.utils.request.PredictorRequestSender;
+import person.dufei.utils.profiler.PredictorProfiler;
 
 import java.util.List;
 
@@ -21,7 +21,7 @@ public class TSV2PredictionScoreMain {
         validateString(concurrencyStr);
         int concurrency = Integer.parseInt(concurrencyStr);
 
-        List<Double> scores = PredictorRequestSender.getScores(asEndpoint, tsvFilePath, schemaJsonPath, accessToken, concurrency);
+        List<Double> scores = PredictorProfiler.getScores(asEndpoint, tsvFilePath, schemaJsonPath, accessToken, concurrency);
         scores.forEach(score -> log.info("{}", score));
     }
 

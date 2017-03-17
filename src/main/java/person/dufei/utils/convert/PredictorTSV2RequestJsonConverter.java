@@ -22,7 +22,7 @@ public class PredictorTSV2RequestJsonConverter {
         return subConvert(data, schemas, accessToken);
     }
 
-    public static List<PredictorRequest> convert(String tsvFile, String schemaJsonFile, String accessToken, int batchSize) throws Exception{
+    public static List<PredictorRequest> convert(String tsvFile, String schemaJsonFile, String accessToken, int batchSize) throws Exception {
         List<List<String>> data = FileReadUtils.getFields(tsvFile, "\t");
         List<Schema> schemas = FileReadUtils.getDeserializedContent(schemaJsonFile, new TypeReference<List<Schema>>(){});
         List<PredictorRequest> requests = Lists.newArrayList();
