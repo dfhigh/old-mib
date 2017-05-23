@@ -1,7 +1,5 @@
 package person.dufei.utils.convert;
 
-import person.dufei.utils.profiler.config.ProfileConfig;
-
 import java.util.List;
 
 /**
@@ -12,9 +10,10 @@ public interface LineConverter<T> {
     /**
      * Convert a list of lines to object we desire.
      * @param lines line list
-     * @param pc profile config
+     * @param accessToken access token
+     * @param startIndex start index
      * @return converted
      */
-    T convert(List<String> lines, ProfileConfig pc);
+    T convert(List<String> lines, String accessToken, int startIndex);
 
 }

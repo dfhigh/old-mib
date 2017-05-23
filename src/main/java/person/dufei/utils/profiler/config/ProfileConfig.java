@@ -14,6 +14,8 @@ public class ProfileConfig {
     private String url;
     private String accessToken = "";
     private long sleep = 0;
+    private String outputPath = "/tmp/score";
+    private String arch = "http";
 
     private ProfileConfig() {}
 
@@ -30,6 +32,10 @@ public class ProfileConfig {
         if (!StringUtils.isBlank(accessToken)) pc.setAccessToken(accessToken);
         String sleep = System.getProperty("sleep");
         if (StringUtils.isNumeric(sleep)) pc.setSleep(Long.parseLong(sleep));
+        String outputPath = System.getProperty("outputPath");
+        if (StringUtils.isNotBlank(outputPath)) pc.setOutputPath(outputPath);
+        String arch = System.getProperty("arch");
+        if (StringUtils.isNotBlank(arch)) pc.setArch(arch);
         return pc;
     }
 
