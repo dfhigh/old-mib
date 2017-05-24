@@ -121,4 +121,13 @@ public abstract class PredictionProfiler implements SimpleProfiler<PredictorRequ
         }
     }
 
+    protected <T> T deserializeQuietly(String json, Class<T> clazz) {
+        try {
+            return OM.readValue(json, clazz);
+        } catch (IOException e) {
+            log.error("failed to deserialize {} as {}", json, clazz.getName());
+            throw new RuntimeException(e);
+        }
+    }
+
 }
