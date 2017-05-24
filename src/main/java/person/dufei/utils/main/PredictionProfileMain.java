@@ -63,6 +63,7 @@ public class PredictionProfileMain {
                 bw.newLine();
             }
         }
+        System.exit(0);
     }
 
     private static SimpleProfiler<PredictorRequest, Pair<Integer, Double>> getProfiler(ProfileConfig pc) {
