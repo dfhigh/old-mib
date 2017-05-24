@@ -30,7 +30,8 @@ public class PredictionProfileMain {
             throw new IllegalArgumentException("tsv path can't be blank");
         }
         ProfileConfig pc = ProfileConfig.fromEnv();
-        InputProvider<PredictorRequest> ip = new FileInputProvider<>(tsv, new PredictorTsvLineConverter(), pc.getBatchSize(), pc.getAccessToken());
+        InputProvider<PredictorRequest> ip = new FileInputProvider<>(tsv, new PredictorTsvLineConverter(),
+                pc.getDelimiter(), pc.isFirstLineSchema(), pc.getBatchSize(), pc.getAccessToken());
         SimpleProfiler<PredictorRequest, Pair<Integer, Double>> profiler = getProfiler(pc);
         BlockingQueue<Pair<Integer, Double>> outputQueue = profiler.profile(ip, pc);
         long requestsSent = 0, threshold = 0;

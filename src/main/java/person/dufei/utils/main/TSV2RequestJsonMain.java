@@ -18,12 +18,16 @@ public class TSV2RequestJsonMain {
         String tsvFilePath = System.getProperty("tsvPath");
         String accessToken = System.getProperty("accessToken");
         String batchStr = System.getProperty("batchSize");
+        String delimiter = System.getProperty("delimiter");
+        String schema = System.getProperty("firstLineSchema");
         validateString(tsvFilePath);
         validateString(accessToken);
 
         int batchSize = StringUtils.isBlank(batchStr) ? 1 : Integer.parseInt(batchStr);
+        delimiter = StringUtils.isBlank(delimiter) ? "\t" : delimiter;
+        boolean isFirstLineSchema = StringUtils.isNotBlank(schema) && Boolean.parseBoolean(schema);
         LineConverter<PredictorRequest> lc = new PredictorTsvLineConverter();
-        InputProvider<PredictorRequest> ip = new FileInputProvider<>(tsvFilePath, lc, batchSize, accessToken);
+        InputProvider<PredictorRequest> ip = new FileInputProvider<>(tsvFilePath, lc, delimiter, isFirstLineSchema, batchSize, accessToken);
         int threshold = 0;
         while (true) {
             PredictorRequest pr = ip.getInputQueue().poll();

@@ -18,9 +18,8 @@ import java.util.UUID;
 public class PredictorTsvLineConverter implements LineConverter<PredictorRequest> {
 
     @Override
-    public PredictorRequest convert(List<String> lines, String accessToken, int startIndex) {
-        String[] columnNames = lines.get(0).split("\t");
-        int size = lines.size()-1;
+    public PredictorRequest convert(String[] columnNames, List<String> lines, String delimiter, String accessToken, int startIndex) {
+        int size = lines.size();
         PredictorRequest pr = new PredictorRequest();
         pr.setRequestId(UUID.randomUUID().toString());
         pr.setResultLimit(size);
@@ -32,7 +31,7 @@ public class PredictorTsvLineConverter implements LineConverter<PredictorRequest
             PredictorRequestItem pri = new PredictorRequestItem();
             pri.setId(String.valueOf(startIndex + i));
             Map<String, String> features = Maps.newHashMapWithExpectedSize(columnNames.length);
-            String[] values = lines.get(i+1).split("\t", -1);
+            String[] values = lines.get(i).split(delimiter, -1);
             for (int j = 0; j < columnNames.length; j++) features.put(columnNames[j], values[j]);
             pri.setRawFeatures(features);
             pris.add(pri);
