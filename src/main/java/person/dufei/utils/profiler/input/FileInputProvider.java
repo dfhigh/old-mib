@@ -72,7 +72,7 @@ public class FileInputProvider<I> implements InputProvider<I> {
                 }
                 lines.add(line);
             }
-            if (lines.size() > 1) queue.put(lc.convert(columnNames, lines, delimiter, accessToken, startIndex));
+            if (lines.size() > 0) queue.put(lc.convert(columnNames, lines, delimiter, accessToken, startIndex));
         } catch (Exception e) {
             log.error("caught exception when opening {} for read...", fileName, e);
             throw new RuntimeException(e);
