@@ -16,7 +16,7 @@
     </repositories>
     <properties>
         <log4j.version>2.6.2</log4j.version>
-        <oa.version>2.5.0-RELEASE</oa.version>
+        <oa.version>2.6.8-RELEASE</oa.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
 
