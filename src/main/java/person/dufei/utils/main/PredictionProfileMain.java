@@ -49,7 +49,7 @@ public class PredictionProfileMain {
                     profiler.getP999Milli());
             if (requestsSent == real) {
                 threshold++;
-                if (threshold >= 3) break;
+                if (threshold >= 3 && ip.getInputQueue().isEmpty()) break;
             } else {
                 requestsSent = real;
                 threshold = 0;

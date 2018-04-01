@@ -8,6 +8,7 @@ import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.ByteArrayEntity;
+import org.apache.http.entity.ContentType;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
@@ -23,6 +24,7 @@ public class HttpPredictionProfiler extends PredictionProfiler {
     @Override
     protected void predict(InputProvider<PredictorRequest> ip, ProfileConfig pc) {
         int threshold = 0;
+        HttpResponse res = null;
         try (CloseableHttpClient http = HttpClients.createDefault()) {
             while (true) {
                 PredictorRequest pr = ip.getInputQueue().poll();
@@ -33,9 +35,9 @@ public class HttpPredictionProfiler extends PredictionProfiler {
                     continue;
                 }
                 HttpPost post = new HttpPost(pc.getUrl());
-                post.setEntity(new ByteArrayEntity(OM.writeValueAsBytes(pr)));
+                post.setEntity(new ByteArrayEntity(OM.writeValueAsBytes(pr), ContentType.APPLICATION_JSON));
                 long start = System.currentTimeMillis();
-                HttpResponse res = http.execute(post);
+                res = http.execute(post);
                 long end = System.currentTimeMillis();
                 requestsSent.incrementAndGet();
                 PredictorResponse response = deserializeQuietly(EntityUtils.toByteArray(res.getEntity()), PredictorResponse.class);
@@ -49,6 +51,7 @@ public class HttpPredictionProfiler extends PredictionProfiler {
             }
         } catch (Exception e) {
             log.error("caught exception when doing http post...", e);
+            if (res != null) EntityUtils.consumeQuietly(res.getEntity());
             throw new RuntimeException(e);
         }
     }
