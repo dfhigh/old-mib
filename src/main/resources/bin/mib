@@ -9,7 +9,7 @@ fi
 JAVA_ARGS=""
 MAIN="person.dufei.utils.main.Model2RequestJsonMain"
 
-ARGS=`getopt -o u:t:f:s:b:a:c:l:o:d: --long model2req,tsv2req,tsv2score,model-url:,token:,tsv-file:,schema-json:,batch-size:,as-endpoint:,concurrency:,log-path:,service:,operation:,endpoint:,status:,start:,end:,profile,log2stats,sleep:,output-path:,first-line-schema,delimiter: -- "$@"`
+ARGS=`getopt -o h:u:t:f:s:b:a:c:l:o:d: --long model2req,tsv2req,tsv2score,model-url:,token:,tsv-file:,schema-json:,batch-size:,as-endpoint:,concurrency:,log-path:,service:,operation:,endpoint:,status:,start:,end:,profile,log2stats,sleep:,output-path:,first-line-schema,delimiter:,help -- "$@"`
 if [ $? != 0 ]; then
     echo "terminating..."
     exit 1
@@ -33,6 +33,7 @@ while [ -n "$1" ]; do
         -l|--log-path) JAVA_ARGS="$JAVA_ARGS -DlogPath=$2" ; shift 2 ;;
         -o|--output-path) JAVA_ARGS="$JAVA_ARGS -DoutputPath=$2" ; shift 2 ;;
         -d|--delimiter) JAVA_ARGS="$JAVA_ARGS -Ddelimiter=$2" ; shift 2 ;;
+        -h|--help) JAVA_ARGS="$JAVA_ARGS -Dhelp=true" ; shift 1 ;;
         --first-line-schema) JAVA_ARGS="$JAVA_ARGS -DfirstLineSchema=true" ; shift 1 ;;
         --service) JAVA_ARGS="$JAVA_ARGS -Dservice=$2" ; shift 2 ;;
         --operation) JAVA_ARGS="$JAVA_ARGS -Doperation=$2" ; shift 2 ;;

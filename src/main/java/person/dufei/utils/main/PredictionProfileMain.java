@@ -78,4 +78,22 @@ public class PredictionProfileMain {
         }
     }
 
+    private static void helpIntercept() {
+        boolean isHelp = Boolean.parseBoolean(System.getProperty("help", "false"));
+        if (!isHelp) return;
+        log.info("this function is used to profile prediction services, we support below configurations");
+        log.info("");
+        log.info("\t\t-h, print this message and exit");
+        log.info("\t\t-f {file}, mandatory and must use absolute path of the file, file should be in text format");
+        log.info("\t\t--first-line-schema, optional, if the first line of the input file is column names, default value is false, if it's false, column names will be generated in format of 'col_{index}'");
+        log.info("\t\t-d {delimiter}, optional, column delimiter of the input file, default value is '\t'");
+        log.info("\t\t--endpoint {endpoint}, mandatory, uri of the target service");
+        log.info("\t\t-t {token}, mandatory, accessToken of the target service");
+        log.info("\t\t-o {output}, optional, absolute output file path of prediction scores, default value is /tmp/score");
+        log.info("\t\t-b {batch}, optional, how many lines of data to include in a single request, default value is 1");
+        log.info("\t\t-c {concurrency}, optional, how many threads will be used to send requests in parallel, default value is 1");
+
+        System.exit(0);
+    }
+
 }
