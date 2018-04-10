@@ -34,15 +34,15 @@ public class LatencyAnalyzer {
         int size = metrics.size();
         double duration = (double) (metrics.get(size-1).getDate().getTime()-metrics.get(0).getDate().getTime()) / 1000.0;
         log.info("timer distribution on {} requests in {} seconds:", size, duration);
-        log.info("name\t\t\t\tmin\tmax\tp50\tp90\tp99\tp999");
+        log.info("name\t\t\t\tmin\tmax\tp50\tp90\tp99\tp999\tp9999");
         log.info("====================================================================================");
         for (Map.Entry<String, List<Long>> entry : latencies.entrySet()) {
             String name = entry.getKey();
             if (name.length() < 16) name += "\t";
             List<Long> durations = entry.getValue();
             int count = durations.size();
-            log.info("{}\t\t{}\t{}\t{}\t{}\t{}\t{}", name, durations.get(0), durations.get(count-1),
-                    durations.get(count/2), durations.get(count*9/10), durations.get(count*99/100), durations.get(count*999/1000));
+            log.info("{}\t\t{}\t{}\t{}\t{}\t{}\t{}\t{}", name, durations.get(0), durations.get(count-1),
+                    durations.get(count/2), durations.get(count*9/10), durations.get(count*99/100), durations.get(count*999/1000), durations.get(count*9999/10000));
         }
         log.info("----------------------------------------------------------------------------------------------");
     }
