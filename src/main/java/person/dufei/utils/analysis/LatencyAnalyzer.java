@@ -20,10 +20,12 @@ public class LatencyAnalyzer {
         for (ServiceMetrics sm : metrics) {
             List<Latency> requestTimers = sm.getLatencies();
             for (Latency latency : requestTimers) {
-                List<Long> existed = latencies.get(latency.getName());
+                String name = latency.getName();
+                if (name.startsWith("pool-") || name.startsWith("http-nio-")) name = name.substring(name.indexOf(".")+1);
+                List<Long> existed = latencies.get(name);
                 if (existed == null) {
                     existed = Lists.newArrayList();
-                    latencies.put(latency.getName(), existed);
+                    latencies.put(name, existed);
                 }
                 existed.add(TimeUnit.MILLISECONDS.convert(latency.getDuration(), latency.getTu()));
             }
