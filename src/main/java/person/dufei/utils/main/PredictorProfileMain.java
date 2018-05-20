@@ -1,28 +1,37 @@
 package person.dufei.utils.main;
 
 import com._4paradigm.predictor.PredictorRequest;
+import com._4paradigm.predictor.PredictorResponse;
+import com._4paradigm.predictor.PredictorStatus;
+import com._4paradigm.prophet.rest.client.AsyncHttpOperator;
+import com._4paradigm.prophet.rest.client.callback.JsonHttpResponseHandler;
+import com._4paradigm.prophet.rest.pipe.io.PipeInputProvider;
 import com.google.common.collect.Lists;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
+import org.apache.http.client.methods.HttpUriRequest;
 import person.dufei.utils.convert.PredictorTsvLineConverter;
-import person.dufei.utils.profiler.HttpPredictionProfiler;
+import person.dufei.utils.profiler.RestProfiler;
 import person.dufei.utils.profiler.SimpleProfiler;
-import person.dufei.utils.profiler.ThriftPredictionProfiler;
 import person.dufei.utils.profiler.config.ProfileConfig;
 import person.dufei.utils.profiler.input.FileInputProvider;
 import person.dufei.utils.profiler.input.InputProvider;
+import person.dufei.utils.profiler.input.PredictRequestFilePipeInputProvider;
 
 import java.io.BufferedWriter;
 import java.io.FileWriter;
+import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingDeque;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Created by dufei on 17/3/6.
  */
 @Slf4j
-public class PredictionProfileMain {
+public class PredictorProfileMain {
 
     public static void main(String[] args) throws Exception {
         helpIntercept();
@@ -30,24 +39,35 @@ public class PredictionProfileMain {
         if (StringUtils.isBlank(tsv)) {
             throw new IllegalArgumentException("tsv path can't be blank");
         }
+        AtomicLong succeeds = new AtomicLong(0);
         ProfileConfig pc = ProfileConfig.fromEnv();
+        BlockingQueue<Pair<Integer, Double>> outputQueue = new LinkedBlockingDeque<>();
         InputProvider<PredictorRequest> ip = new FileInputProvider<>(tsv, new PredictorTsvLineConverter(),
                 pc.getDelimiter(), pc.isFirstLineSchema(), pc.getBatchSize(), pc.getAccessToken());
-        SimpleProfiler<PredictorRequest, Pair<Integer, Double>> profiler = getProfiler(pc);
-        BlockingQueue<Pair<Integer, Double>> outputQueue = profiler.profile(ip, pc);
+        PipeInputProvider<HttpUriRequest> inputProvider = new PredictRequestFilePipeInputProvider(pc.getUrl(), tsv,
+                pc.getBatchSize(), pc.getDelimiter(), pc.isFirstLineSchema(), pc.getAccessToken());
+        SimpleProfiler profiler = new RestProfiler<>(new AsyncHttpOperator(16, 16), inputProvider,
+            new JsonHttpResponseHandler<PredictorResponse>(PredictorResponse.class) {
+                @Override
+                protected void onSuccess(PredictorResponse response) {
+                    if (response.getStatus() == PredictorStatus.OK) succeeds.incrementAndGet();
+                    response.getInstances().forEach(item -> outputQueue.offer(Pair.of(Integer.parseInt(item.getId()), item.getScore())));
+                }
+            }, pc.getConcurrency()
+        );
         long requestsSent = 0, threshold = 0;
         while (true) {
-            long real = profiler.getRequestsSent();
-            log.info("profile duration: {}, requests sent: {}, waiting requests: {}, 200: {}, 500: {}, tp50: {}, tp90: {}, tp99: {}, tp999: {}",
+            long real = profiler.getRequestsCompleted();
+            SimpleProfiler.LatencyStats ls = profiler.getLatencyStats();
+            log.info("start duration: {}, requests sent: {}, waiting requests: {}, 200: {}, tp50: {}, tp90: {}, tp99: {}, tp999: {}",
                     profiler.getDurationMilli(),
                     real,
                     ip.getInputQueue().size(),
-                    profiler.get200s(),
-                    profiler.get500s(),
-                    profiler.getP50Milli(),
-                    profiler.getP90Milli(),
-                    profiler.getP99Milli(),
-                    profiler.getP999Milli());
+                    succeeds.get(),
+                    ls.getTp50(),
+                    ls.getTp90(),
+                    ls.getTp99(),
+                    ls.getTp999());
             if (requestsSent == real) {
                 threshold++;
                 if (threshold >= 3 && ip.getInputQueue().isEmpty()) break;
@@ -58,7 +78,7 @@ public class PredictionProfileMain {
             Thread.sleep(3000);
         }
         List<Pair<Integer, Double>> pairs = Lists.newArrayList(outputQueue);
-        pairs.sort((pair1, pair2) -> pair1.getLeft().compareTo(pair2.getLeft()));
+        pairs.sort(Comparator.comparing(Pair::getLeft));
         try (BufferedWriter bw = new BufferedWriter(new FileWriter(pc.getOutputPath()))) {
             for (Pair<Integer, Double> pair : pairs) {
                 bw.write(pair.getLeft() + "\t" + pair.getRight());
@@ -68,21 +88,10 @@ public class PredictionProfileMain {
         System.exit(0);
     }
 
-    private static SimpleProfiler<PredictorRequest, Pair<Integer, Double>> getProfiler(ProfileConfig pc) {
-        switch (pc.getArch()) {
-            case "http":
-                return new HttpPredictionProfiler();
-            case "thrift":
-                return new ThriftPredictionProfiler();
-            default:
-                throw new IllegalArgumentException("unknown arch " + pc.getArch());
-        }
-    }
-
     private static void helpIntercept() {
         boolean isHelp = Boolean.parseBoolean(System.getProperty("help", "false"));
         if (!isHelp) return;
-        log.info("this function is used to profile prediction services, we support below configurations");
+        log.info("this function is used to start prediction services, we support below configurations");
         log.info("");
         log.info("\t-h, print this message and exit");
         log.info("\t-f {file}, mandatory and must use absolute path of the file, file should be in text format");

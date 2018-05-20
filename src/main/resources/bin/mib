@@ -22,7 +22,7 @@ while [ -n "$1" ]; do
         --model2req) MAIN="person.dufei.utils.main.Model2RequestJsonMain" ; shift 1 ;;
         --tsv2req) MAIN="person.dufei.utils.main.TSV2RequestJsonMain" ; shift 1 ;;
         --log2stats) MAIN="person.dufei.utils.main.ServiceLogAnalyzeMain" ; shift 1 ;;
-        --profile) MAIN="person.dufei.utils.main.PredictionProfileMain" ; shift 1 ;;
+        --profile) MAIN="person.dufei.utils.main.PredictorProfileMain" ; shift 1 ;;
         -u|--model-url) JAVA_ARGS="$JAVA_ARGS -DmodelUrl=$2" ; shift 2 ;;
         -t|--token) JAVA_ARGS="$JAVA_ARGS -DaccessToken=$2" ; shift 2 ;;
         -f|--tsv-file) JAVA_ARGS="$JAVA_ARGS -DtsvPath=$2" ; shift 2 ;;
