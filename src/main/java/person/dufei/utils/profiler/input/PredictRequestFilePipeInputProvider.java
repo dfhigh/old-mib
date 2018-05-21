@@ -1,7 +1,7 @@
 package person.dufei.utils.profiler.input;
 
-import com._4paradigm.predictor.PredictorRequest;
-import com._4paradigm.predictor.PredictorRequestItem;
+import com._4paradigm.predictor.PredictItem;
+import com._4paradigm.predictor.PredictRequest;
 import com._4paradigm.prophet.rest.pipe.io.PipeInputProvider;
 import com._4paradigm.prophet.rest.pipe.io.impl.QueuePipeInputProvider;
 import com.conversantmedia.util.concurrent.DisruptorBlockingQueue;
@@ -9,7 +9,6 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import org.apache.http.client.methods.HttpPost;
-import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.entity.ByteArrayEntity;
 import org.apache.http.entity.ContentType;
 
@@ -26,7 +25,7 @@ import static com._4paradigm.prophet.rest.utils.Serdes.serializeAsJsonBytes;
 import static com._4paradigm.prophet.rest.utils.Validator.validateIntPositive;
 import static com._4paradigm.prophet.rest.utils.Validator.validateStringNotBlank;
 
-public class PredictRequestFilePipeInputProvider implements PipeInputProvider<HttpUriRequest>, Runnable {
+public class PredictRequestFilePipeInputProvider implements PipeInputProvider<HttpPost>, Runnable {
 
     private static final Map<String, String> EMPTY = ImmutableMap.of();
 
@@ -35,7 +34,7 @@ public class PredictRequestFilePipeInputProvider implements PipeInputProvider<Ht
     private final String delimiter;
     private final boolean isFirstLineSchema;
     private final String accessToken;
-    private final PipeInputProvider<HttpUriRequest> internal;
+    private final PipeInputProvider<HttpPost> internal;
     private final BufferedReader br;
 
     public PredictRequestFilePipeInputProvider(final String uri, final String fileName, final int batchSize, final String delimiter,
@@ -77,7 +76,7 @@ public class PredictRequestFilePipeInputProvider implements PipeInputProvider<Ht
             List<String> lines = Lists.newArrayListWithCapacity(batchSize);
             if (line != null) lines.add(line);
             int startIndex = 0;
-            while ((line = br.readLine()) != null) {
+            while ((line = reader.readLine()) != null) {
                 if (lines.size() >= batchSize) {
                     offer(convert(columnNames, lines, startIndex));
                     startIndex += batchSize;
@@ -93,12 +92,12 @@ public class PredictRequestFilePipeInputProvider implements PipeInputProvider<Ht
     }
 
     @Override
-    public void offer(HttpUriRequest payload) {
+    public void offer(HttpPost payload) {
         internal.offer(payload);
     }
 
     @Override
-    public HttpUriRequest take() {
+    public HttpPost take() {
         return internal.take();
     }
 
@@ -113,22 +112,22 @@ public class PredictRequestFilePipeInputProvider implements PipeInputProvider<Ht
         if (br != null) br.close();
     }
 
-    private HttpUriRequest convert(String[] columnNames, List<String> lines, int startIndex) {
-        PredictorRequest pr = new PredictorRequest();
+    private HttpPost convert(String[] columnNames, List<String> lines, int startIndex) {
+        PredictRequest pr = new PredictRequest();
         pr.setRequestId(UUID.randomUUID().toString());
         pr.setResultLimit(batchSize);
         pr.setAccessToken(accessToken);
         pr.setCommonFeatures(EMPTY);
-        List<PredictorRequestItem> pris = Lists.newArrayListWithCapacity(batchSize);
+        List<PredictItem> pris = Lists.newArrayListWithCapacity(batchSize);
         pr.setRawInstances(pris);
         for (int i = 0; i < batchSize; i++) {
-            PredictorRequestItem pri = new PredictorRequestItem();
-            pri.setId(String.valueOf(startIndex + i));
+            PredictItem pi = new PredictItem();
+            pi.setId(String.valueOf(startIndex + i));
             Map<String, String> features = Maps.newHashMapWithExpectedSize(columnNames.length);
             String[] values = lines.get(i).split(delimiter, -1);
             for (int j = 0; j < columnNames.length; j++) features.put(columnNames[j], values[j]);
-            pri.setRawFeatures(features);
-            pris.add(pri);
+            pi.setRawFeatures(features);
+            pris.add(pi);
         }
         HttpPost post = new HttpPost(uri);
         post.setEntity(new ByteArrayEntity(serializeAsJsonBytes(pr), ContentType.APPLICATION_JSON));

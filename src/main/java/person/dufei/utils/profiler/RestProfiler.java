@@ -28,15 +28,15 @@ import static com._4paradigm.prophet.rest.utils.Validator.validateObjectNotNull;
  * Created by dufei on 17/3/6.
  */
 @Slf4j
-public class RestProfiler<T> implements SimpleProfiler {
+public class RestProfiler<R extends HttpUriRequest, T> implements SimpleProfiler {
 
     private final AtomicBoolean started;
     private final AtomicLong requestsCompleted;
     private final BlockingQueue<Long> latencyQueue;
-    private final PipeDriver<HttpUriRequest, Void> pipeDriver;
+    private final PipeDriver<R, Void> pipeDriver;
     private long start;
 
-    public RestProfiler(final AsyncHttpOperator http, final PipeInputProvider<HttpUriRequest> inputProvider, final HttpResponseHandler<T> handler, int concurrency) {
+    public RestProfiler(final AsyncHttpOperator http, final PipeInputProvider<R> inputProvider, final HttpResponseHandler<T> handler, int concurrency) {
         validateObjectNotNull(http, "http operator");
         validateObjectNotNull(inputProvider, "input provider");
         validateObjectNotNull(handler, "response handler");
@@ -44,7 +44,7 @@ public class RestProfiler<T> implements SimpleProfiler {
         this.started = new AtomicBoolean(false);
         this.requestsCompleted = new AtomicLong(0);
         this.latencyQueue = new LinkedBlockingDeque<>();
-        PipeOutputConsumer<HttpUriRequest, Void> consumer = new AsyncRestExecutor<>(http, handler, request ->
+        PipeOutputConsumer<R, Void> consumer = new AsyncRestExecutor<>(http, handler, request ->
             new BasicAsyncResponseConsumer() {
                 @Override
                 protected HttpResponse buildResult(final HttpContext context) {

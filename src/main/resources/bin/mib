@@ -9,7 +9,7 @@ fi
 JAVA_ARGS=""
 MAIN="person.dufei.utils.main.Model2RequestJsonMain"
 
-ARGS=`getopt -o h:u:t:f:s:b:a:c:l:o:d: --long model2req,tsv2req,tsv2score,model-url:,token:,tsv-file:,schema-json:,batch-size:,as-endpoint:,concurrency:,log-path:,service:,operation:,endpoint:,status:,start:,end:,profile,log2stats,sleep:,output-path:,first-line-schema,delimiter:,help -- "$@"`
+ARGS=`getopt -o h:u:t:f:s:b:a:c:l:o:d: --long tsv2req,tsv2score,model-url:,token:,tsv-file:,schema-json:,batch-size:,as-endpoint:,concurrency:,log-path:,service:,operation:,endpoint:,status:,start:,end:,profile,log2stats,sleep:,output-path:,first-line-schema,delimiter:,help -- "$@"`
 if [ $? != 0 ]; then
     echo "terminating..."
     exit 1
@@ -19,7 +19,6 @@ fi
 
 while [ -n "$1" ]; do
     case "$1" in
-        --model2req) MAIN="person.dufei.utils.main.Model2RequestJsonMain" ; shift 1 ;;
         --tsv2req) MAIN="person.dufei.utils.main.TSV2RequestJsonMain" ; shift 1 ;;
         --log2stats) MAIN="person.dufei.utils.main.ServiceLogAnalyzeMain" ; shift 1 ;;
         --profile) MAIN="person.dufei.utils.main.PredictorProfileMain" ; shift 1 ;;

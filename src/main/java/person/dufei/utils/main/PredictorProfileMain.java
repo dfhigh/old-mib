@@ -1,8 +1,7 @@
 package person.dufei.utils.main;
 
-import com._4paradigm.predictor.PredictorRequest;
-import com._4paradigm.predictor.PredictorResponse;
-import com._4paradigm.predictor.PredictorStatus;
+import com._4paradigm.predictor.PredictResponse;
+import com._4paradigm.predictor.Status;
 import com._4paradigm.prophet.rest.client.AsyncHttpOperator;
 import com._4paradigm.prophet.rest.client.callback.JsonHttpResponseHandler;
 import com._4paradigm.prophet.rest.pipe.io.PipeInputProvider;
@@ -10,13 +9,10 @@ import com.google.common.collect.Lists;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
-import org.apache.http.client.methods.HttpUriRequest;
-import person.dufei.utils.convert.PredictorTsvLineConverter;
+import org.apache.http.client.methods.HttpPost;
 import person.dufei.utils.profiler.RestProfiler;
 import person.dufei.utils.profiler.SimpleProfiler;
 import person.dufei.utils.profiler.config.ProfileConfig;
-import person.dufei.utils.profiler.input.FileInputProvider;
-import person.dufei.utils.profiler.input.InputProvider;
 import person.dufei.utils.profiler.input.PredictRequestFilePipeInputProvider;
 
 import java.io.BufferedWriter;
@@ -42,15 +38,13 @@ public class PredictorProfileMain {
         AtomicLong succeeds = new AtomicLong(0);
         ProfileConfig pc = ProfileConfig.fromEnv();
         BlockingQueue<Pair<Integer, Double>> outputQueue = new LinkedBlockingDeque<>();
-        InputProvider<PredictorRequest> ip = new FileInputProvider<>(tsv, new PredictorTsvLineConverter(),
-                pc.getDelimiter(), pc.isFirstLineSchema(), pc.getBatchSize(), pc.getAccessToken());
-        PipeInputProvider<HttpUriRequest> inputProvider = new PredictRequestFilePipeInputProvider(pc.getUrl(), tsv,
+        PipeInputProvider<HttpPost> inputProvider = new PredictRequestFilePipeInputProvider(pc.getUrl(), tsv,
                 pc.getBatchSize(), pc.getDelimiter(), pc.isFirstLineSchema(), pc.getAccessToken());
         SimpleProfiler profiler = new RestProfiler<>(new AsyncHttpOperator(16, 16), inputProvider,
-            new JsonHttpResponseHandler<PredictorResponse>(PredictorResponse.class) {
+            new JsonHttpResponseHandler<PredictResponse>(PredictResponse.class) {
                 @Override
-                protected void onSuccess(PredictorResponse response) {
-                    if (response.getStatus() == PredictorStatus.OK) succeeds.incrementAndGet();
+                protected void onSuccess(PredictResponse response) {
+                    if (response.getStatus() == Status.OK) succeeds.incrementAndGet();
                     response.getInstances().forEach(item -> outputQueue.offer(Pair.of(Integer.parseInt(item.getId()), item.getScore())));
                 }
             }, pc.getConcurrency()
@@ -59,10 +53,9 @@ public class PredictorProfileMain {
         while (true) {
             long real = profiler.getRequestsCompleted();
             SimpleProfiler.LatencyStats ls = profiler.getLatencyStats();
-            log.info("start duration: {}, requests sent: {}, waiting requests: {}, 200: {}, tp50: {}, tp90: {}, tp99: {}, tp999: {}",
+            log.info("start duration: {}, requests sent: {}, 200: {}, tp50: {}, tp90: {}, tp99: {}, tp999: {}",
                     profiler.getDurationMilli(),
                     real,
-                    ip.getInputQueue().size(),
                     succeeds.get(),
                     ls.getTp50(),
                     ls.getTp90(),
@@ -70,7 +63,7 @@ public class PredictorProfileMain {
                     ls.getTp999());
             if (requestsSent == real) {
                 threshold++;
-                if (threshold >= 3 && ip.getInputQueue().isEmpty()) break;
+                if (threshold >= 3 && inputProvider.isClosed()) break;
             } else {
                 requestsSent = real;
                 threshold = 0;
