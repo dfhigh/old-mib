@@ -2,7 +2,7 @@
 cur=$(cd `dirname $0`; pwd)
 cd $cur/..
 
-JAVA_CMD="java -cp ./conf:./bin:./mib-1.0.jar"
+JAVA_CMD="java -cp ./conf:./bin:./mib-1.1.jar"
 if [ $JAVA_HOME ]; then
     JAVA_CMD="$JAVA_HOME/bin/$JAVA_CMD"
 fi
