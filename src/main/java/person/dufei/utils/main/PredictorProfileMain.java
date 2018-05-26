@@ -20,7 +20,7 @@ import java.io.FileWriter;
 import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingDeque;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
@@ -37,7 +37,7 @@ public class PredictorProfileMain {
         }
         AtomicLong succeeds = new AtomicLong(0);
         ProfileConfig pc = ProfileConfig.fromEnv();
-        BlockingQueue<Pair<Integer, Double>> outputQueue = new LinkedBlockingDeque<>();
+        BlockingQueue<Pair<Integer, Double>> outputQueue = new LinkedBlockingQueue<>();
         PipeInputProvider<HttpPost> inputProvider = new PredictRequestFilePipeInputProvider(pc.getUrl(), tsv,
                 pc.getBatchSize(), pc.getDelimiter(), pc.isFirstLineSchema(), pc.getAccessToken());
         SimpleProfiler profiler = new RestProfiler<>(new AsyncHttpOperator(16, 16), inputProvider,
@@ -49,6 +49,7 @@ public class PredictorProfileMain {
                 }
             }, pc.getConcurrency()
         );
+        profiler.start();
         long requestsSent = 0, threshold = 0;
         while (true) {
             long real = profiler.getRequestsCompleted();
