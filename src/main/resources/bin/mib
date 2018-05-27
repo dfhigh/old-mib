@@ -9,7 +9,7 @@ fi
 JAVA_ARGS=""
 MAIN="person.dufei.utils.main.Model2RequestJsonMain"
 
-ARGS=`getopt -o h:u:t:f:s:b:a:c:l:o:d: --long tsv2req,tsv2score,model-url:,token:,tsv-file:,schema-json:,batch-size:,as-endpoint:,concurrency:,log-path:,service:,operation:,endpoint:,status:,start:,end:,profile,log2stats,sleep:,output-path:,first-line-schema,delimiter:,help -- "$@"`
+ARGS=`getopt -o h:u:t:f:s:b:a:c:l:o:d: --long tsv2req,tsv2score,model-url:,token:,tsv-file:,schema-json:,batch-size:,as-endpoint:,concurrency:,log-path:,service:,operation:,endpoint:,status:,start:,end:,profile,log2stats,sleep:,output-path:,first-line-schema,delimiter:,help,kafka,kafka-endpoints:,kafka-topics: -- "$@"`
 if [ $? != 0 ]; then
     echo "terminating..."
     exit 1
@@ -22,6 +22,7 @@ while [ -n "$1" ]; do
         --tsv2req) MAIN="person.dufei.utils.main.TSV2RequestJsonMain" ; shift 1 ;;
         --log2stats) MAIN="person.dufei.utils.main.ServiceLogAnalyzeMain" ; shift 1 ;;
         --profile) MAIN="person.dufei.utils.main.PredictorProfileMain" ; shift 1 ;;
+        --kafka) MAIN="person.dufei.utils.main.KafkaMessageLoggerMain" ; shift 1 ;;
         -u|--model-url) JAVA_ARGS="$JAVA_ARGS -DmodelUrl=$2" ; shift 2 ;;
         -t|--token) JAVA_ARGS="$JAVA_ARGS -DaccessToken=$2" ; shift 2 ;;
         -f|--tsv-file) JAVA_ARGS="$JAVA_ARGS -DtsvPath=$2" ; shift 2 ;;
@@ -41,6 +42,8 @@ while [ -n "$1" ]; do
         --status) JAVA_ARGS="$JAVA_ARGS -Dstatus=$2" ; shift 2 ;;
         --start) JAVA_ARGS="$JAVA_ARGS -DstartDate=$2" ; shift 2 ;;
         --end) JAVA_ARGS="$JAVA_ARGS -DendDate=$2" ; shift 2 ;;
+        --kafka-endpoints) JAVA_ARGS="$JAVA_ARGS -DkafkaEndpoints=$2" ; shift 2 ;;
+        --kafka-topics) JAVA_ARGS="$JAVA_ARGS -DkafkaTopics=$2" ; shift 2 ;;
         --) shift ; break ;;
         *) echo "unknown argument $1, terminating..." ; exit 1 ;;
     esac
