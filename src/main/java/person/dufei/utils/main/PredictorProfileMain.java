@@ -44,8 +44,10 @@ public class PredictorProfileMain {
             new JsonHttpResponseHandler<PredictResponse>(PredictResponse.class) {
                 @Override
                 protected void onSuccess(PredictResponse response) {
-                    if (response.getStatus() == Status.OK) succeeds.incrementAndGet();
-                    response.getInstances().forEach(item -> outputQueue.offer(Pair.of(Integer.parseInt(item.getId()), item.getScore())));
+                    if (response.getStatus() == Status.OK) {
+                        succeeds.incrementAndGet();
+                        response.getInstances().forEach(item -> outputQueue.offer(Pair.of(Integer.parseInt(item.getId()), item.getScore())));
+                    }
                 }
             }, pc.getConcurrency()
         );
@@ -54,10 +56,11 @@ public class PredictorProfileMain {
         while (true) {
             long real = profiler.getRequestsCompleted();
             SimpleProfiler.LatencyStats ls = profiler.getLatencyStats();
-            log.info("start duration: {}, requests sent: {}, 200: {}, tp50: {}, tp90: {}, tp99: {}, tp999: {}",
+            log.info("start duration: {}, requests sent: {}, 200: {}, response received: {}, tp50: {}, tp90: {}, tp99: {}, tp999: {}",
                     profiler.getDurationMilli(),
                     real,
                     succeeds.get(),
+                    ls.getSize(),
                     ls.getTp50(),
                     ls.getTp90(),
                     ls.getTp99(),

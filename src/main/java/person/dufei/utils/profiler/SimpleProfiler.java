@@ -32,6 +32,7 @@ public interface SimpleProfiler {
 
     @Data
     class LatencyStats {
+        private int size;
         private long tp50;
         private long tp90;
         private long tp99;

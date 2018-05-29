@@ -16,7 +16,7 @@ import org.apache.http.protocol.HttpContext;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingDeque;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -43,7 +43,7 @@ public class RestProfiler<R extends HttpUriRequest, T> implements SimpleProfiler
         validateIntPositive(concurrency, "concurrency");
         this.started = new AtomicBoolean(false);
         this.requestsCompleted = new AtomicLong(0);
-        this.latencyQueue = new LinkedBlockingDeque<>();
+        this.latencyQueue = new LinkedBlockingQueue<>();
         PipeOutputConsumer<R, Void> consumer = new AsyncRestExecutor<>(http, handler, request ->
             new BasicAsyncResponseConsumer() {
                 @Override
@@ -82,6 +82,7 @@ public class RestProfiler<R extends HttpUriRequest, T> implements SimpleProfiler
         if (latencyQueue.isEmpty()) return ls;
         List<Long> list = Lists.newArrayList(latencyQueue);
         Collections.sort(list);
+        ls.setSize(list.size());
         ls.setTp999(list.get((int) (list.size() * 0.999)));
         ls.setTp99(list.get((int) (list.size() * 0.99)));
         ls.setTp90(list.get((int) (list.size() * 0.9)));
