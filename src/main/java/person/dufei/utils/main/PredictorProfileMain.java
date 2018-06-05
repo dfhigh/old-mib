@@ -5,6 +5,7 @@ import com._4paradigm.predictor.Status;
 import com._4paradigm.prophet.rest.client.AsyncHttpOperator;
 import com._4paradigm.prophet.rest.client.callback.JsonHttpResponseHandler;
 import com._4paradigm.prophet.rest.pipe.io.PipeInputProvider;
+import com._4paradigm.prophet.rest.pipe.io.impl.InfiniteCyclingPipeInputProvider;
 import com.google.common.collect.Lists;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -40,6 +41,9 @@ public class PredictorProfileMain {
         BlockingQueue<Pair<Integer, Double>> outputQueue = new LinkedBlockingQueue<>();
         PipeInputProvider<HttpPost> inputProvider = new PredictRequestFilePipeInputProvider(pc.getUrl(), tsv,
                 pc.getBatchSize(), pc.getDelimiter(), pc.isFirstLineSchema(), pc.getAccessToken());
+        if (pc.isForever()) {
+            inputProvider = new InfiniteCyclingPipeInputProvider<>(inputProvider);
+        }
         SimpleProfiler profiler = new RestProfiler<>(new AsyncHttpOperator(16, 16), inputProvider,
             new JsonHttpResponseHandler<PredictResponse>(PredictResponse.class) {
                 @Override

@@ -17,6 +17,7 @@ public class ProfileConfig {
     private String outputPath = "/tmp/score";
     private String arch = "http";
     private boolean firstLineSchema = false;
+    private boolean forever = false;
     private String delimiter = "\t";
 
     private ProfileConfig() {}
@@ -42,6 +43,8 @@ public class ProfileConfig {
         if (StringUtils.isNotBlank(fls)) pc.setFirstLineSchema(Boolean.parseBoolean(fls));
         String delimiter = System.getProperty("delimiter");
         if (StringUtils.isNotBlank(delimiter)) pc.setDelimiter(delimiter);
+        String forever = System.getProperty("forever");
+        if (StringUtils.isNotBlank(forever)) pc.forever = Boolean.parseBoolean(forever);
         return pc;
     }
 
