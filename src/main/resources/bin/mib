@@ -9,7 +9,7 @@ fi
 JAVA_ARGS=""
 MAIN="person.dufei.utils.main.Model2RequestJsonMain"
 
-ARGS=`getopt -o h:u:t:f:s:b:a:c:l:o:d: --long tsv2req,tsv2score,model-url:,token:,tsv-file:,schema-json:,batch-size:,as-endpoint:,concurrency:,log-path:,service:,operation:,endpoint:,status:,start:,end:,profile,log2stats,sleep:,output-path:,first-line-schema,forever,delimiter:,help,kafka,kafka-endpoints:,kafka-topics: -- "$@"`
+ARGS=`getopt -o h:u:t:f:s:b:a:c:l:o:d: --long tsv2req,tsv2score,model-url:,token:,tsv-file:,schema-json:,batch-size:,as-endpoint:,concurrency:,log-path:,service:,operation:,endpoint:,status:,start:,end:,profile,log2stats,sleep:,output-path:,first-line-schema,forever,delimiter:,async,help,kafka,kafka-endpoints:,kafka-topics: -- "$@"`
 if [ $? != 0 ]; then
     echo "terminating..."
     exit 1
@@ -36,6 +36,7 @@ while [ -n "$1" ]; do
         -h|--help) JAVA_ARGS="$JAVA_ARGS -Dhelp=true" ; shift 1 ;;
         --first-line-schema) JAVA_ARGS="$JAVA_ARGS -DfirstLineSchema=true" ; shift 1 ;;
         --forever) JAVA_ARGS="$JAVA_ARGS -Dforever=true" ; shift 1 ;;
+        --async) JAVA_ARGS="$JAVA_ARGS -Dasync=true" ; shift 1 ;;
         --service) JAVA_ARGS="$JAVA_ARGS -Dservice=$2" ; shift 2 ;;
         --operation) JAVA_ARGS="$JAVA_ARGS -Doperation=$2" ; shift 2 ;;
         --endpoint) JAVA_ARGS="$JAVA_ARGS -Dendpoint=$2" ; shift 2 ;;

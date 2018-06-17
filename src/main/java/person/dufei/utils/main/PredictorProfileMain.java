@@ -3,6 +3,9 @@ package person.dufei.utils.main;
 import com._4paradigm.predictor.PredictResponse;
 import com._4paradigm.predictor.Status;
 import com._4paradigm.prophet.rest.client.AsyncHttpOperator;
+import com._4paradigm.prophet.rest.client.HttpOperator;
+import com._4paradigm.prophet.rest.client.SyncHttpOperator;
+import com._4paradigm.prophet.rest.client.callback.HttpResponseHandler;
 import com._4paradigm.prophet.rest.client.callback.JsonHttpResponseHandler;
 import com._4paradigm.prophet.rest.pipe.io.PipeInputProvider;
 import com._4paradigm.prophet.rest.pipe.io.impl.InfiniteCyclingPipeInputProvider;
@@ -38,21 +41,21 @@ public class PredictorProfileMain {
         }
         AtomicLong succeeds = new AtomicLong(0);
         ProfileConfig pc = ProfileConfig.fromEnv();
-        BlockingQueue<Pair<Integer, Double>> outputQueue = new LinkedBlockingQueue<>();
+        BlockingQueue<Pair<Integer, List<Double>>> outputQueue = new LinkedBlockingQueue<>();
         PipeInputProvider<HttpPost> inputProvider = new PredictRequestFilePipeInputProvider(pc.getUrl(), tsv,
                 pc.getBatchSize(), pc.getDelimiter(), pc.isFirstLineSchema(), pc.getAccessToken());
         if (pc.isForever()) {
             inputProvider = new InfiniteCyclingPipeInputProvider<>(inputProvider);
         }
-        SimpleProfiler profiler = new RestProfiler<>(new AsyncHttpOperator(16, 16), inputProvider,
-            new JsonHttpResponseHandler<PredictResponse>(PredictResponse.class) {
-                @Override
-                protected void onSuccess(PredictResponse response) {
-                    if (response.getStatus() == Status.OK) succeeds.incrementAndGet();
-                    response.getInstances().forEach(item -> outputQueue.offer(Pair.of(Integer.parseInt(item.getId()), item.getScore())));
-                }
-            }, pc.getConcurrency()
-        );
+        HttpResponseHandler<PredictResponse> handler =  new JsonHttpResponseHandler<PredictResponse>(PredictResponse.class) {
+            @Override
+            protected void onSuccess(PredictResponse response) {
+                if (response.getStatus() == Status.OK) succeeds.incrementAndGet();
+                response.getInstances().forEach(item -> outputQueue.offer(Pair.of(Integer.parseInt(item.getId()), item.getScores())));
+            }
+        };
+        HttpOperator http = pc.isAsync() ? new AsyncHttpOperator(16, 16) : new SyncHttpOperator(16, 16);
+        SimpleProfiler profiler = new RestProfiler<>(http, inputProvider, handler, pc.getConcurrency(), pc.isAsync());
         profiler.start();
         long requestsSent = 0, threshold = 0;
         while (true) {
@@ -75,11 +78,11 @@ public class PredictorProfileMain {
             }
             Thread.sleep(3000);
         }
-        List<Pair<Integer, Double>> pairs = Lists.newArrayList(outputQueue);
+        List<Pair<Integer, List<Double>>> pairs = Lists.newArrayList(outputQueue);
         pairs.sort(Comparator.comparing(Pair::getLeft));
         try (BufferedWriter bw = new BufferedWriter(new FileWriter(pc.getOutputPath()))) {
-            for (Pair<Integer, Double> pair : pairs) {
-                bw.write(pair.getLeft() + "\t" + pair.getRight());
+            for (Pair<Integer, List<Double>> pair : pairs) {
+                bw.write(pair.getLeft() + "\t" + StringUtils.join(pair.getRight(), "\t"));
                 bw.newLine();
             }
         }

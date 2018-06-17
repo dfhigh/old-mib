@@ -18,6 +18,7 @@ public class ProfileConfig {
     private String arch = "http";
     private boolean firstLineSchema = false;
     private boolean forever = false;
+    private boolean async = false;
     private String delimiter = "\t";
 
     private ProfileConfig() {}
@@ -45,6 +46,8 @@ public class ProfileConfig {
         if (StringUtils.isNotBlank(delimiter)) pc.setDelimiter(delimiter);
         String forever = System.getProperty("forever");
         if (StringUtils.isNotBlank(forever)) pc.forever = Boolean.parseBoolean(forever);
+        String async = System.getProperty("async");
+        if (StringUtils.isNotBlank(async)) pc.async = Boolean.parseBoolean(async);
         return pc;
     }
 
