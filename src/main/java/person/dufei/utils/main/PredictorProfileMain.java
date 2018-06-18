@@ -41,6 +41,7 @@ public class PredictorProfileMain {
         }
         AtomicLong succeeds = new AtomicLong(0);
         ProfileConfig pc = ProfileConfig.fromEnv();
+        log.info("profile config is {}", pc);
         BlockingQueue<Pair<Integer, List<Double>>> outputQueue = new LinkedBlockingQueue<>();
         PipeInputProvider<HttpPost> inputProvider = new PredictRequestFilePipeInputProvider(pc.getUrl(), tsv,
                 pc.getBatchSize(), pc.getDelimiter(), pc.isFirstLineSchema(), pc.getAccessToken());

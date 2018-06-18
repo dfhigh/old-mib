@@ -42,7 +42,6 @@ public class PredictRequestFilePipeInputProvider implements PipeInputProvider<Ht
         validateStringNotBlank(uri, "predictor uri");
         validateStringNotBlank(fileName, "file name");
         validateIntPositive(batchSize, "batch size");
-        validateStringNotBlank(delimiter, "file column delimiter");
         validateStringNotBlank(accessToken, "access token");
         this.uri = uri;
         this.batchSize = batchSize;

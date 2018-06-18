@@ -56,7 +56,10 @@ public class RestProfiler<R extends HttpUriRequest, T> implements SimpleProfiler
                     requestsCompleted.incrementAndGet();
                     return super.buildResult(context);
                 }
-            }) : new SyncRestExecutor<>(http, new LatencyAwareHttpResponseHandler<>(handler, latencyQueue::offer));
+            }) : new SyncRestExecutor<>(http, new LatencyAwareHttpResponseHandler<>(handler, latency -> {
+                requestsCompleted.incrementAndGet();
+                latencyQueue.offer(latency);
+            }));
         this.pipeDriver = new PipeDriver<>(inputProvider, consumer, concurrency);
     }
 
