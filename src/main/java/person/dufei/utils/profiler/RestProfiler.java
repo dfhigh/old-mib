@@ -1,11 +1,14 @@
 package person.dufei.utils.profiler;
 
 import com._4paradigm.prophet.rest.client.AsyncHttpOperator;
+import com._4paradigm.prophet.rest.client.HttpOperator;
 import com._4paradigm.prophet.rest.client.callback.HttpResponseHandler;
+import com._4paradigm.prophet.rest.client.callback.LatencyAwareHttpResponseHandler;
 import com._4paradigm.prophet.rest.pipe.PipeDriver;
 import com._4paradigm.prophet.rest.pipe.io.PipeInputProvider;
 import com._4paradigm.prophet.rest.pipe.io.PipeOutputConsumer;
 import com._4paradigm.prophet.rest.pipe.io.impl.AsyncRestExecutor;
+import com._4paradigm.prophet.rest.pipe.io.impl.SyncRestExecutor;
 import com.google.common.collect.Lists;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.HttpResponse;
@@ -36,7 +39,7 @@ public class RestProfiler<R extends HttpUriRequest, T> implements SimpleProfiler
     private final PipeDriver<R, Void> pipeDriver;
     private long start;
 
-    public RestProfiler(final AsyncHttpOperator http, final PipeInputProvider<R> inputProvider, final HttpResponseHandler<T> handler, int concurrency) {
+    public RestProfiler(final HttpOperator http, final PipeInputProvider<R> inputProvider, final HttpResponseHandler<T> handler, int concurrency, boolean async) {
         validateObjectNotNull(http, "http operator");
         validateObjectNotNull(inputProvider, "input provider");
         validateObjectNotNull(handler, "response handler");
@@ -44,7 +47,7 @@ public class RestProfiler<R extends HttpUriRequest, T> implements SimpleProfiler
         this.started = new AtomicBoolean(false);
         this.requestsCompleted = new AtomicLong(0);
         this.latencyQueue = new LinkedBlockingQueue<>();
-        PipeOutputConsumer<R, Void> consumer = new AsyncRestExecutor<>(http, handler, request ->
+        PipeOutputConsumer<R, Void> consumer = async ? new AsyncRestExecutor<>((AsyncHttpOperator) http, handler, request ->
             new BasicAsyncResponseConsumer() {
                 @Override
                 protected HttpResponse buildResult(final HttpContext context) {
@@ -53,8 +56,10 @@ public class RestProfiler<R extends HttpUriRequest, T> implements SimpleProfiler
                     requestsCompleted.incrementAndGet();
                     return super.buildResult(context);
                 }
-            }
-        );
+            }) : new SyncRestExecutor<>(http, new LatencyAwareHttpResponseHandler<>(handler, latency -> {
+                requestsCompleted.incrementAndGet();
+                latencyQueue.offer(latency);
+            }));
         this.pipeDriver = new PipeDriver<>(inputProvider, consumer, concurrency);
     }
 
