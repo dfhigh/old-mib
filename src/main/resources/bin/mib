@@ -2,14 +2,11 @@
 cur=$(cd `dirname $0`; pwd)
 cd $cur/..
 
-JAVA_CMD="java -cp ./conf:./bin:./mib-1.1.jar"
-if [ $JAVA_HOME ]; then
-    JAVA_CMD="$JAVA_HOME/bin/$JAVA_CMD"
-fi
+JAVA_CMD="java -cp ./conf:./bin:./mib-1.2.jar"
 JAVA_ARGS=""
-MAIN="person.dufei.utils.main.Model2RequestJsonMain"
+MAIN=""
 
-ARGS=`getopt -o h:u:t:f:s:b:a:c:l:o:d: --long tsv2req,tsv2score,model-url:,token:,tsv-file:,schema-json:,batch-size:,as-endpoint:,concurrency:,log-path:,service:,operation:,endpoint:,status:,start:,end:,profile,log2stats,sleep:,output-path:,first-line-schema,forever,delimiter:,async,help,kafka,kafka-endpoints:,kafka-topics: -- "$@"`
+ARGS=`getopt -o h:u:t:f:s:b:a:c:l:o:d: --long token:,tsv-file:,schema-json:,batch-size:,concurrency:,log-path:,service:,operation:,endpoint:,status:,start:,end:,profile,log2stats,sleep:,output-path:,first-line-schema,forever,delimiter:,async,help,kafka,kafka-endpoints:,kafka-topics: -- "$@"`
 if [ $? != 0 ]; then
     echo "terminating..."
     exit 1
@@ -19,16 +16,13 @@ fi
 
 while [ -n "$1" ]; do
     case "$1" in
-        --tsv2req) MAIN="person.dufei.utils.main.TSV2RequestJsonMain" ; shift 1 ;;
         --log2stats) MAIN="person.dufei.utils.main.ServiceLogAnalyzeMain" ; shift 1 ;;
         --profile) MAIN="person.dufei.utils.main.PredictorProfileMain" ; shift 1 ;;
         --kafka) MAIN="person.dufei.utils.main.KafkaMessageLoggerMain" ; shift 1 ;;
-        -u|--model-url) JAVA_ARGS="$JAVA_ARGS -DmodelUrl=$2" ; shift 2 ;;
         -t|--token) JAVA_ARGS="$JAVA_ARGS -DaccessToken=$2" ; shift 2 ;;
         -f|--tsv-file) JAVA_ARGS="$JAVA_ARGS -DtsvPath=$2" ; shift 2 ;;
         -s|--schema-json) JAVA_ARGS="$JAVA_ARGS -DschemaJson=$2" ; shift 2 ;;
         -b|--batch-size) JAVA_ARGS="$JAVA_ARGS -DbatchSize=$2" ; shift 2 ;;
-        -a|--as-endpoint) JAVA_ARGS="$JAVA_ARGS -DasEndpoint=$2" ; shift 2 ;;
         -c|--concurrency) JAVA_ARGS="$JAVA_ARGS -Dconcurrency=$2" ; shift 2 ;;
         -l|--log-path) JAVA_ARGS="$JAVA_ARGS -DlogPath=$2" ; shift 2 ;;
         -o|--output-path) JAVA_ARGS="$JAVA_ARGS -DoutputPath=$2" ; shift 2 ;;

@@ -44,7 +44,7 @@ public class PredictorProfileMain {
         log.info("profile config is {}", pc);
         BlockingQueue<Pair<Integer, List<Double>>> outputQueue = new LinkedBlockingQueue<>();
         PipeInputProvider<HttpPost> inputProvider = new PredictRequestFilePipeInputProvider(pc.getUrl(), tsv,
-                pc.getBatchSize(), pc.getDelimiter(), pc.isFirstLineSchema(), pc.getAccessToken());
+                pc.getBatchSize(), pc.getDelimiter(), pc.isFirstLineSchema(), pc.getSchemas(), pc.getAccessToken());
         if (pc.isForever()) {
             inputProvider = new InfiniteCyclingPipeInputProvider<>(inputProvider);
         }
@@ -98,13 +98,15 @@ public class PredictorProfileMain {
         log.info("");
         log.info("\t-h, print this message and exit");
         log.info("\t-f {file}, mandatory and must use absolute path of the file, file should be in text format");
-        log.info("\t--first-line-schema, optional, if the first line of the input file is column names, default value is false, if it's false, column names will be generated in format of 'col_{index}'");
+        log.info("\t--first-line-schema, optional, if the first line of the input file is column names, default value is false");
+        log.info("\t-s, mandatory, input data schema, could be json like '[{\"name\":\"col1\",\"type\":\"Int\"},{\"name\":\"col2\",\"type\":\"String\"}] or an absolute file path that contains this json'");
         log.info("\t-d {delimiter}, optional, column delimiter of the input file, default value is '\\t'");
         log.info("\t--endpoint {endpoint}, mandatory, uri of the target service");
         log.info("\t-t {token}, mandatory, accessToken of the target service");
         log.info("\t-o {output}, optional, absolute output file path of prediction scores, default value is /tmp/score");
         log.info("\t-b {batch}, optional, how many lines of data to include in a single request, default value is 1");
         log.info("\t-c {concurrency}, optional, how many threads will be used to send requests in parallel, default value is 1");
+        log.info("\t--async, optional, use async mode to profile if present");
 
         System.exit(0);
     }

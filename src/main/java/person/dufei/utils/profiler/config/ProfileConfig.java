@@ -3,11 +3,18 @@ package person.dufei.utils.profiler.config;
 import lombok.Data;
 import org.apache.commons.lang3.StringUtils;
 
+import java.util.regex.Pattern;
+
+import static com._4paradigm.prophet.rest.utils.Serdes.deserializeFromJson;
+import static person.dufei.utils.io.file.FileReadUtils.getContent;
+
 /**
  * Created by dufei on 17/3/4.
  */
 @Data
 public class ProfileConfig {
+
+    private static final Pattern JSON_PATTERN = Pattern.compile("^\\s*[\\[|{].*[]|}]\\s*$");
 
     private int concurrency = 1;
     private int batchSize = 1;
@@ -17,6 +24,7 @@ public class ProfileConfig {
     private String outputPath = "/tmp/score";
     private String arch = "http";
     private boolean firstLineSchema = false;
+    private Schema[] schemas;
     private boolean forever = false;
     private boolean async = false;
     private String delimiter = "\t";
@@ -42,6 +50,13 @@ public class ProfileConfig {
         if (StringUtils.isNotBlank(arch)) pc.setArch(arch);
         String fls = System.getProperty("firstLineSchema");
         if (StringUtils.isNotBlank(fls)) pc.setFirstLineSchema(Boolean.parseBoolean(fls));
+        String schemaJson = System.getProperty("schemaJson");
+        if (StringUtils.isNotBlank(schemaJson)) {
+            if (!JSON_PATTERN.matcher(schemaJson).matches()) {
+                schemaJson = getContent(schemaJson);
+            }
+            pc.setSchemas(deserializeFromJson(schemaJson, Schema[].class));
+        }
         String delimiter = System.getProperty("delimiter");
         if (StringUtils.isNotBlank(delimiter)) pc.setDelimiter(delimiter);
         String forever = System.getProperty("forever");

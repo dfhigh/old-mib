@@ -9,14 +9,11 @@ jdk 1.8
 3) ```./target/bin/mib 参数```<br/>
 
 # **执行参数**
-```--mode2lreq``` 将线上模型直接转为request json，从stdout输出<br/>
-```--tsv2req``` 将本地tsv文件转为request json，从stdout输出<br/>
-```--tsv2score``` 将本地tsv文件转为prediction score，从stdout输出<br/>
+```--profile``` 从本地输入数据profile预估服务<br/>
 ```--log2stats``` 将service log转为aggregate之后的统计信息<br/>
-```-u```或```--model-url``` 指定线上模型url，仅在```--model2req```时生效<br/>
+```--kafka``` 读取制定的kafka topics里的数据输出到控制台<br/>
 ```-t```或```--token``` 指定accessToken<br/>
-```-f```或```--tsv-file``` 指定tsv文件路径，仅在```--tsv2req```时生效<br/>
-```-s```或```--schema-json``` 指定schema json文件路径<br/>
+```-s```或```--schema-json``` 指定schema json或包含此json的文件路径<br/>
 ```-b```或```--batch-size``` 指定单个request包含的最大的instance数量，仅在```--tsv2req```时生效<br/>
 ```-a```或```--as-endpoint``` 指定AS的endpoint，仅在```--tsv2score```时生效<br/>
 ```-c```或```--concurrency``` 指定请求AS的并发数，仅在```--tsv2score```时生效<br/>
@@ -30,10 +27,14 @@ jdk 1.8
 
 # **示例**
 ```
-./target/bin/mib --tsv2req \
--t 123456 \
--f /Users/dufei/Documents/1212/bank_data_with_date \
--s /Users/dufei/Documents/1212/model_28_schema.json \
--b 400 \
-> /Users/dufei/Documents/1212/bank_requests
+./target/bin/mib --profile \
+-t mib \
+-f /Users/dufei/Documents/bank/test_data.csv \
+-s /Users/dufei/Documents/bank/3date_schema.json \
+-b 1 \
+-c 2 \
+-d , \
+--endpoint http://172.27.128.25:31107/api/predict \
+--first-line-schema \
+-o /tmp/score
 ```

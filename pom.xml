@@ -3,7 +3,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>person.dufei.utils</groupId>
     <artifactId>mib</artifactId>
-    <version>1.1</version>
+    <version>1.2</version>
     <packaging>jar</packaging>
     <name>mib</name>
     <url>http://4paradigm.com</url>
@@ -16,7 +16,7 @@
     </repositories>
     <properties>
         <log4j.version>2.6.2</log4j.version>
-        <oa.version>3.1.0-SNAPSHOT</oa.version>
+        <oa.version>3.2.0-SNAPSHOT</oa.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
 
