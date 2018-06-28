@@ -1,5 +1,8 @@
 package person.dufei.utils.profiler.config;
 
+import com._4paradigm.prophet.rest.client.HttpExecution;
+import com._4paradigm.prophet.rest.client.SyncHttpOperator;
+import com._4paradigm.prophet.rest.model.Response;
 import lombok.Data;
 import org.apache.commons.lang3.StringUtils;
 
@@ -31,7 +34,7 @@ public class ProfileConfig {
 
     private ProfileConfig() {}
 
-    public static ProfileConfig fromEnv() {
+    public static ProfileConfig fromEnv() throws Exception {
         ProfileConfig pc = new ProfileConfig();
         String concurrency = System.getProperty("concurrency");
         if (StringUtils.isNumeric(concurrency)) pc.setConcurrency(Integer.parseInt(concurrency));
@@ -56,6 +59,10 @@ public class ProfileConfig {
                 schemaJson = getContent(schemaJson);
             }
             pc.setSchemas(deserializeFromJson(schemaJson, Schema[].class));
+        } else {
+            String des = url.replace("predict", "description");
+            pc.setSchemas(HttpExecution.get(des).executeForJson(new SyncHttpOperator(1, 1),
+                    PredictorDescriptionResponse.class).getData().schemaTerms);
         }
         String delimiter = System.getProperty("delimiter");
         if (StringUtils.isNotBlank(delimiter)) pc.setDelimiter(delimiter);
@@ -64,6 +71,13 @@ public class ProfileConfig {
         String async = System.getProperty("async");
         if (StringUtils.isNotBlank(async)) pc.async = Boolean.parseBoolean(async);
         return pc;
+    }
+
+    private static class PredictorDescriptionResponse extends Response<PredictorDescription> {}
+
+    @Data
+    private static class PredictorDescription {
+        private Schema[] schemaTerms;
     }
 
 }

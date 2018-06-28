@@ -37,6 +37,7 @@ public interface SimpleProfiler {
         private long tp90;
         private long tp99;
         private long tp999;
+        private long tp9999;
     }
 
 }

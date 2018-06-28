@@ -88,6 +88,7 @@ public class RestProfiler<R extends HttpUriRequest, T> implements SimpleProfiler
         List<Long> list = Lists.newArrayList(latencyQueue);
         Collections.sort(list);
         ls.setSize(list.size());
+        ls.setTp9999(list.get((int) (list.size() * 0.9999)));
         ls.setTp999(list.get((int) (list.size() * 0.999)));
         ls.setTp99(list.get((int) (list.size() * 0.99)));
         ls.setTp90(list.get((int) (list.size() * 0.9)));

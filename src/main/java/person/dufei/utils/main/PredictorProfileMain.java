@@ -62,7 +62,7 @@ public class PredictorProfileMain {
         while (true) {
             long real = profiler.getRequestsCompleted();
             SimpleProfiler.LatencyStats ls = profiler.getLatencyStats();
-            log.info("start duration: {}, requests sent: {}, 200: {}, response received: {}, tp50: {}, tp90: {}, tp99: {}, tp999: {}",
+            log.info("start duration: {}, requests sent: {}, 200: {}, response received: {}, tp50: {}, tp90: {}, tp99: {}, tp999: {}, tp9999: {}",
                     profiler.getDurationMilli(),
                     real,
                     succeeds.get(),
@@ -70,7 +70,8 @@ public class PredictorProfileMain {
                     ls.getTp50(),
                     ls.getTp90(),
                     ls.getTp99(),
-                    ls.getTp999());
+                    ls.getTp999(),
+                    ls.getTp9999());
             if (requestsSent == real) {
                 threshold++;
                 if (threshold >= 3 && inputProvider.isClosed()) break;
