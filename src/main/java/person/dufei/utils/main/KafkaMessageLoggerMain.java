@@ -14,6 +14,7 @@ import java.util.concurrent.Executors;
 public class KafkaMessageLoggerMain {
 
     public static void main(String[] args) {
+        helpIntercept();
         String kafkaEndpoints = System.getProperty("kafkaEndpoints");
         String kafkaTopicsAgg = System.getProperty("kafkaTopics");
         int concurrency = Integer.parseInt(Optional.ofNullable(System.getProperty("concurrency")).orElse("1"));
@@ -23,5 +24,18 @@ public class KafkaMessageLoggerMain {
         for (int i = 0; i < concurrency; i++) {
             es.submit(consumer);
         }
+    }
+
+    private static void helpIntercept() {
+        boolean isHelp = Boolean.parseBoolean(System.getProperty("help", "false"));
+        if (!isHelp) return;
+        log.info("this function is used to print kafka messages to console, we support below configurations");
+        log.info("");
+        log.info("\t-h, print this message and exit");
+        log.info("\t--kafka-endpoints {endpoints}, mandatory, kafka endpoints, comma separated list");
+        log.info("\t--kafka-topics {topics}, mandatory, kafka topics, comma separated list");
+        log.info("\t-c {concurrency}, optional, thread count to consume the messages, default value is 1");
+
+        System.exit(0);
     }
 }

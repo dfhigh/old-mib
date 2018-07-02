@@ -35,15 +35,15 @@ public class PredictorProfileMain {
 
     public static void main(String[] args) throws Exception {
         helpIntercept();
-        String tsv = System.getProperty("tsvPath");
-        if (StringUtils.isBlank(tsv)) {
-            throw new IllegalArgumentException("tsv path can't be blank");
+        String filePath = System.getProperty("filePath");
+        if (StringUtils.isBlank(filePath)) {
+            throw new IllegalArgumentException("file path can't be blank");
         }
         AtomicLong succeeds = new AtomicLong(0);
         ProfileConfig pc = ProfileConfig.fromEnv();
         log.info("profile config is {}", pc);
         BlockingQueue<Pair<Integer, List<Double>>> outputQueue = new LinkedBlockingQueue<>();
-        PipeInputProvider<HttpPost> inputProvider = new PredictRequestFilePipeInputProvider(pc.getUrl(), tsv,
+        PipeInputProvider<HttpPost> inputProvider = new PredictRequestFilePipeInputProvider(pc.getUrl(), filePath,
                 pc.getBatchSize(), pc.getDelimiter(), pc.isFirstLineSchema(), pc.getSchemas(), pc.getAccessToken());
         if (pc.isForever()) {
             inputProvider = new InfiniteCyclingPipeInputProvider<>(inputProvider);
@@ -95,12 +95,12 @@ public class PredictorProfileMain {
     private static void helpIntercept() {
         boolean isHelp = Boolean.parseBoolean(System.getProperty("help", "false"));
         if (!isHelp) return;
-        log.info("this function is used to start prediction services, we support below configurations");
+        log.info("this function is used to profile prediction services, we support below configurations");
         log.info("");
         log.info("\t-h, print this message and exit");
         log.info("\t-f {file}, mandatory and must use absolute path of the file, file should be in text format");
         log.info("\t--first-line-schema, optional, if the first line of the input file is column names, default value is false");
-        log.info("\t-s, mandatory, input data schema, could be json like '[{\"name\":\"col1\",\"type\":\"Int\"},{\"name\":\"col2\",\"type\":\"String\"}] or an absolute file path that contains this json'");
+        log.info("\t-s, optional, input data schema, could be json like '[{\"name\":\"col1\",\"type\":\"Int\"},{\"name\":\"col2\",\"type\":\"String\"}]' or an absolute file path that contains this json, if not present, schema will be pulled from /api/description of service");
         log.info("\t-d {delimiter}, optional, column delimiter of the input file, default value is '\\t'");
         log.info("\t--endpoint {endpoint}, mandatory, uri of the target service");
         log.info("\t-t {token}, mandatory, accessToken of the target service");

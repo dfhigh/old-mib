@@ -6,7 +6,7 @@ JAVA_CMD="java -cp ./conf:./bin:./mib-1.2.jar"
 JAVA_ARGS=""
 MAIN=""
 
-ARGS=`getopt -o h:u:t:f:s:b:a:c:l:o:d: --long token:,tsv-file:,schema-json:,batch-size:,concurrency:,log-path:,service:,operation:,endpoint:,status:,start:,end:,profile,log2stats,sleep:,output-path:,first-line-schema,forever,delimiter:,async,help,kafka,kafka-endpoints:,kafka-topics: -- "$@"`
+ARGS=`getopt -o h:u:t:f:s:b:a:c:o:d: --long token:,file:,schema-json:,batch-size:,concurrency:,service:,operation:,endpoint:,status:,start:,end:,profile,log2stats,sleep:,output-path:,first-line-schema,forever,delimiter:,async,help,kafka,kafka-endpoints:,kafka-topics:,parquet2text -- "$@"`
 if [ $? != 0 ]; then
     echo "terminating..."
     exit 1
@@ -19,12 +19,12 @@ while [ -n "$1" ]; do
         --log2stats) MAIN="person.dufei.utils.main.ServiceLogAnalyzeMain" ; shift 1 ;;
         --profile) MAIN="person.dufei.utils.main.PredictorProfileMain" ; shift 1 ;;
         --kafka) MAIN="person.dufei.utils.main.KafkaMessageLoggerMain" ; shift 1 ;;
+        --parquet2text) MAIN="person.dufei.utils.main.ParquetParseMain" ; shift 1 ;;
         -t|--token) JAVA_ARGS="$JAVA_ARGS -DaccessToken=$2" ; shift 2 ;;
-        -f|--tsv-file) JAVA_ARGS="$JAVA_ARGS -DtsvPath=$2" ; shift 2 ;;
+        -f|--file) JAVA_ARGS="$JAVA_ARGS -DfilePath=$2" ; shift 2 ;;
         -s|--schema-json) JAVA_ARGS="$JAVA_ARGS -DschemaJson=$2" ; shift 2 ;;
         -b|--batch-size) JAVA_ARGS="$JAVA_ARGS -DbatchSize=$2" ; shift 2 ;;
         -c|--concurrency) JAVA_ARGS="$JAVA_ARGS -Dconcurrency=$2" ; shift 2 ;;
-        -l|--log-path) JAVA_ARGS="$JAVA_ARGS -DlogPath=$2" ; shift 2 ;;
         -o|--output-path) JAVA_ARGS="$JAVA_ARGS -DoutputPath=$2" ; shift 2 ;;
         -d|--delimiter) JAVA_ARGS="$JAVA_ARGS -Ddelimiter=$2" ; shift 2 ;;
         -h|--help) JAVA_ARGS="$JAVA_ARGS -Dhelp=true" ; shift 1 ;;
