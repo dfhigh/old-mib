@@ -14,20 +14,30 @@ import org.apache.parquet.io.ColumnIOFactory;
 import org.apache.parquet.io.MessageColumnIO;
 import org.apache.parquet.io.RecordReader;
 import org.apache.parquet.schema.MessageType;
+import org.apache.parquet.schema.OriginalType;
+import org.apache.parquet.schema.PrimitiveType;
 import org.apache.parquet.schema.Type;
 
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 
 import static com._4paradigm.prophet.rest.utils.Validator.validateStringNotBlank;
 
 @Slf4j
 public class ParquetParseMain {
+
+    private static final int JULIAN_EPOCH_OFFSET_DAYS = 2_440_588;
+    private static final long MILLIS_IN_DAY = TimeUnit.DAYS.toMillis(1);
+    private static final long NANOS_PER_MILLISECOND = TimeUnit.MILLISECONDS.toNanos(1);
 
     public static void main(String[] args) throws Exception {
         helpIntercept();
@@ -53,6 +63,7 @@ public class ParquetParseMain {
         ColumnIOFactory factory = new ColumnIOFactory();
         long rowCount = 0;
         try (BufferedWriter bw = new BufferedWriter(new FileWriter(output))) {
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
             for (Path path : files) {
                 log.info("parsing file {}...", path);
                 ParquetMetadata footer = ParquetFileReader.readFooter(conf, path, ParquetMetadataConverter.NO_FILTER);
@@ -72,7 +83,15 @@ public class ParquetParseMain {
                                 Type fieldType = group.getType().getType(j);
                                 for (int k = 0; k < valueCount; k++) {
                                     if (fieldType.isPrimitive()) {
-                                        bw.write(group.getValueToString(j, k));
+                                        if (fieldType.asPrimitiveType().getPrimitiveTypeName().equals(PrimitiveType.PrimitiveTypeName.INT96)) {
+                                            ByteBuffer bb = ByteBuffer.wrap(group.getInt96(j, k).getBytes()).order(ByteOrder.LITTLE_ENDIAN);
+                                            long nanos = bb.getLong();
+                                            int julianDay = bb.getInt();
+                                            long timestamp = (julianDay - JULIAN_EPOCH_OFFSET_DAYS) * MILLIS_IN_DAY + nanos / NANOS_PER_MILLISECOND;
+                                            bw.write(sdf.format(timestamp));
+                                        } else {
+                                            bw.write(group.getValueToString(j, k));
+                                        }
                                         if (k < valueCount-1) bw.write(",");
                                     }
                                 }
