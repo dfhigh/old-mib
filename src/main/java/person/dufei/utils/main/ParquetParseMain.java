@@ -20,6 +20,7 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 
@@ -41,6 +42,7 @@ public class ParquetParseMain {
         if (file.isDirectory()) {
             File[] pFiles = file.listFiles(f -> f.getName().endsWith(".parquet"));
             if (pFiles != null) Arrays.stream(pFiles).map(f -> new Path(f.getAbsolutePath())).forEach(files::add);
+            files.sort(Comparator.comparing(Path::getName));
         } else if (file.isFile()) {
             files.add(new Path(filePath));
         }
