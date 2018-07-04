@@ -52,7 +52,12 @@ public class PredictorProfileMain {
             @Override
             protected void onSuccess(PredictResponse response) {
                 if (response.getStatus() == Status.OK) succeeds.incrementAndGet();
-                response.getInstances().forEach(item -> outputQueue.offer(Pair.of(Integer.parseInt(item.getId()), item.getScores())));
+                response.getInstances().forEach(item -> {
+                    Pair<Integer, List<Double>> pair = Pair.of(Integer.parseInt(item.getId()), item.getScores());
+                    while (!outputQueue.offer(pair)) {
+                        sleepQuietly(100);
+                    }
+                });
             }
         };
         HttpOperator http = pc.isAsync() ? new AsyncHttpOperator(16, 16) : new SyncHttpOperator(16, 16);
@@ -110,6 +115,14 @@ public class PredictorProfileMain {
         log.info("\t--async, optional, use async mode to profile if present");
 
         System.exit(0);
+    }
+
+    private static void sleepQuietly(long millis) {
+        try {
+            Thread.sleep(millis);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
     }
 
 }
