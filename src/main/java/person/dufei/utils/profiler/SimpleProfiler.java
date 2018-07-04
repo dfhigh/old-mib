@@ -22,6 +22,12 @@ public interface SimpleProfiler {
      * return requests sent during profiling, should be updated on real time
      * @return current sent requests
      */
+    long getRequestsSent();
+
+    /**
+     * return requests completed during profiling, should be updated on real time
+     * @return current completed requests
+     */
     long getRequestsCompleted();
 
     /**

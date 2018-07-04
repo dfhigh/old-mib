@@ -63,25 +63,25 @@ public class PredictorProfileMain {
         HttpOperator http = pc.isAsync() ? new AsyncHttpOperator(16, 16) : new SyncHttpOperator(16, 16);
         SimpleProfiler profiler = new RestProfiler<>(http, inputProvider, handler, pc.getConcurrency(), pc.isAsync());
         profiler.start();
-        long requestsSent = 0, threshold = 0;
+        int threshold = 0;
         while (true) {
-            long real = profiler.getRequestsCompleted();
+            long produced = inputProvider.provided(), sent = profiler.getRequestsSent(), completed = profiler.getRequestsCompleted();
             SimpleProfiler.LatencyStats ls = profiler.getLatencyStats();
-            log.info("start duration: {}, requests sent: {}, 200: {}, response received: {}, tp50: {}, tp90: {}, tp99: {}, tp999: {}, tp9999: {}",
+            log.info("profile duration: {}, requests produced: {}, requests sent: {}, response received: {}, 200: {}, tp50: {}, tp90: {}, tp99: {}, tp999: {}, tp9999: {}",
                     profiler.getDurationMilli(),
-                    real,
+                    inputProvider.provided(),
+                    sent,
+                    completed,
                     succeeds.get(),
-                    ls.getSize(),
                     ls.getTp50(),
                     ls.getTp90(),
                     ls.getTp99(),
                     ls.getTp999(),
                     ls.getTp9999());
-            if (requestsSent == real) {
+            if (produced == sent && sent == completed) {
                 threshold++;
                 if (threshold >= 3 && inputProvider.isClosed()) break;
             } else {
-                requestsSent = real;
                 threshold = 0;
             }
             Thread.sleep(3000);
@@ -89,8 +89,14 @@ public class PredictorProfileMain {
         List<Pair<Integer, List<Double>>> pairs = Lists.newArrayList(outputQueue);
         pairs.sort(Comparator.comparing(Pair::getLeft));
         try (BufferedWriter bw = new BufferedWriter(new FileWriter(pc.getOutputPath()))) {
+            int previous = -1;
             for (Pair<Integer, List<Double>> pair : pairs) {
-                bw.write(pair.getLeft() + "\t" + StringUtils.join(pair.getRight(), "\t"));
+                int current = pair.getLeft();
+                while (++previous < current) {
+                    bw.write(previous + "\tN/A");
+                    bw.newLine();
+                }
+                bw.write(current + "\t" + StringUtils.join(pair.getRight(), "\t"));
                 bw.newLine();
             }
         }

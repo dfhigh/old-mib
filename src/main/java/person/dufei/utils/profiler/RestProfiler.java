@@ -35,6 +35,7 @@ public class RestProfiler<R extends HttpUriRequest, T> implements SimpleProfiler
 
     private final AtomicBoolean started;
     private final AtomicLong requestsCompleted;
+    private final PipeOutputConsumer<R, Void> consumer;
     private final BlockingQueue<Long> latencyQueue;
     private final PipeDriver<R, Void> pipeDriver;
     private long start;
@@ -47,7 +48,7 @@ public class RestProfiler<R extends HttpUriRequest, T> implements SimpleProfiler
         this.started = new AtomicBoolean(false);
         this.requestsCompleted = new AtomicLong(0);
         this.latencyQueue = new LinkedBlockingQueue<>();
-        PipeOutputConsumer<R, Void> consumer = async ? new AsyncRestExecutor<>((AsyncHttpOperator) http, handler, request ->
+        this.consumer = async ? new AsyncRestExecutor<>((AsyncHttpOperator) http, handler, request ->
             new BasicAsyncResponseConsumer() {
                 @Override
                 protected HttpResponse buildResult(final HttpContext context) {
@@ -74,6 +75,11 @@ public class RestProfiler<R extends HttpUriRequest, T> implements SimpleProfiler
     @Override
     public long getDurationMilli() {
         return System.currentTimeMillis() - start;
+    }
+
+    @Override
+    public long getRequestsSent() {
+        return consumer.consumed();
     }
 
     @Override

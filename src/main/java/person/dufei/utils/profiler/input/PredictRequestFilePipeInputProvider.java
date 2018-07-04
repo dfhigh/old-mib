@@ -106,6 +106,11 @@ public class PredictRequestFilePipeInputProvider implements PipeInputProvider<Ht
     }
 
     @Override
+    public long provided() {
+        return internal.provided();
+    }
+
+    @Override
     public void close() throws IOException {
         internal.close();
         if (br != null) br.close();
