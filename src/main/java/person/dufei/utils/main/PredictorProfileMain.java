@@ -63,13 +63,14 @@ public class PredictorProfileMain {
         HttpOperator http = pc.isAsync() ? new AsyncHttpOperator(16, 16) : new SyncHttpOperator(16, 16);
         SimpleProfiler profiler = new RestProfiler<>(http, inputProvider, handler, pc.getConcurrency(), pc.isAsync());
         profiler.start();
+        long previousSent = 0;
         int threshold = 0;
         while (true) {
             long produced = inputProvider.provided(), sent = profiler.getRequestsSent(), completed = profiler.getRequestsCompleted();
             SimpleProfiler.LatencyStats ls = profiler.getLatencyStats();
             log.info("profile duration: {}, requests produced: {}, requests sent: {}, response received: {}, 200: {}, tp50: {}, tp90: {}, tp99: {}, tp999: {}, tp9999: {}",
                     profiler.getDurationMilli(),
-                    inputProvider.provided(),
+                    produced,
                     sent,
                     completed,
                     succeeds.get(),
@@ -78,11 +79,12 @@ public class PredictorProfileMain {
                     ls.getTp99(),
                     ls.getTp999(),
                     ls.getTp9999());
-            if (produced == sent && sent == completed) {
+            if (previousSent == sent && sent == completed) {
                 threshold++;
                 if (threshold >= 3 && inputProvider.isClosed()) break;
             } else {
                 threshold = 0;
+                previousSent = sent;
             }
             Thread.sleep(3000);
         }
