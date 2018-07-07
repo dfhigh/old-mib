@@ -8,16 +8,16 @@ import com._4paradigm.prophet.rest.client.SyncHttpOperator;
 import com._4paradigm.prophet.rest.client.callback.HttpResponseHandler;
 import com._4paradigm.prophet.rest.client.callback.JsonHttpResponseHandler;
 import com._4paradigm.prophet.rest.pipe.io.PipeInputProvider;
-import com._4paradigm.prophet.rest.pipe.io.impl.InfiniteCyclingPipeInputProvider;
 import com.google.common.collect.Lists;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
-import org.apache.http.client.methods.HttpPost;
+import person.dufei.utils.profiler.BrpcPredictorProfiler;
 import person.dufei.utils.profiler.RestProfiler;
 import person.dufei.utils.profiler.SimpleProfiler;
 import person.dufei.utils.profiler.config.ProfileConfig;
-import person.dufei.utils.profiler.input.PredictRequestFilePipeInputProvider;
+import person.dufei.utils.profiler.input.PredictRequestFileDirectPipeInputProvider;
+import person.dufei.utils.profiler.input.PredictRequestFileRestPipeInputProvider;
 
 import java.io.BufferedWriter;
 import java.io.FileWriter;
@@ -33,6 +33,7 @@ import java.util.concurrent.atomic.AtomicLong;
 @Slf4j
 public class PredictorProfileMain {
 
+    @SuppressWarnings("unchecked")
     public static void main(String[] args) throws Exception {
         helpIntercept();
         String filePath = System.getProperty("filePath");
@@ -42,26 +43,41 @@ public class PredictorProfileMain {
         AtomicLong succeeds = new AtomicLong(0);
         ProfileConfig pc = ProfileConfig.fromEnv();
         log.info("profile config is {}", pc);
+        PipeInputProvider inputProvider;
+        SimpleProfiler profiler;
         BlockingQueue<Pair<Integer, List<Double>>> outputQueue = new LinkedBlockingQueue<>();
-        PipeInputProvider<HttpPost> inputProvider = new PredictRequestFilePipeInputProvider(pc.getUrl(), filePath,
-                pc.getBatchSize(), pc.getDelimiter(), pc.isFirstLineSchema(), pc.getSchemas(), pc.getAccessToken());
-        if (pc.isForever()) {
-            inputProvider = new InfiniteCyclingPipeInputProvider<>(inputProvider);
-        }
-        HttpResponseHandler<PredictResponse> handler =  new JsonHttpResponseHandler<PredictResponse>(PredictResponse.class) {
-            @Override
-            protected void onSuccess(PredictResponse response) {
+        if (StringUtils.equalsIgnoreCase("rest", pc.getArch())) {
+            inputProvider = new PredictRequestFileRestPipeInputProvider(pc.getUrl(), filePath,
+                    pc.getBatchSize(), pc.getDelimiter(), pc.isFirstLineSchema(), pc.getSchemas(), pc.getAccessToken());
+            HttpResponseHandler<PredictResponse> handler = new JsonHttpResponseHandler<PredictResponse>(PredictResponse.class) {
+                @Override
+                protected void onSuccess(PredictResponse response) {
+                    if (response.getStatus() == Status.OK) succeeds.incrementAndGet();
+                    response.getInstances().forEach(item -> {
+                        Pair<Integer, List<Double>> pair = Pair.of(Integer.parseInt(item.getId()), item.getScores());
+                        while (!outputQueue.offer(pair)) {
+                            sleepQuietly(100);
+                        }
+                    });
+                }
+            };
+            HttpOperator http = pc.isAsync() ? new AsyncHttpOperator(16, 16) : new SyncHttpOperator(16, 16);
+            profiler = new RestProfiler<>(http, inputProvider, handler, pc.getConcurrency(), pc.isAsync());
+        } else if (StringUtils.equalsIgnoreCase("brpc", pc.getArch())) {
+            inputProvider = new PredictRequestFileDirectPipeInputProvider(pc.getUrl(), filePath, pc.getBatchSize(),
+                    pc.getDelimiter(), pc.isFirstLineSchema(), pc.getSchemas(), pc.getAccessToken());
+            profiler = new BrpcPredictorProfiler(inputProvider, response -> {
                 if (response.getStatus() == Status.OK) succeeds.incrementAndGet();
-                response.getInstances().forEach(item -> {
+                if (response.getInstances() != null) response.getInstances().forEach(item -> {
                     Pair<Integer, List<Double>> pair = Pair.of(Integer.parseInt(item.getId()), item.getScores());
                     while (!outputQueue.offer(pair)) {
                         sleepQuietly(100);
                     }
                 });
-            }
-        };
-        HttpOperator http = pc.isAsync() ? new AsyncHttpOperator(16, 16) : new SyncHttpOperator(16, 16);
-        SimpleProfiler profiler = new RestProfiler<>(http, inputProvider, handler, pc.getConcurrency(), pc.isAsync());
+            }, pc.getUrl(), pc.getSchemas(), pc.getConcurrency());
+        } else {
+            throw new IllegalArgumentException("unknown service arch " + pc.getArch());
+        }
         profiler.start();
         long previousSent = 0;
         int threshold = 0;

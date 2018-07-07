@@ -1,11 +1,16 @@
 package person.dufei.utils.profiler.config;
 
+import com._4paradigm.predictor.PredictorDescription;
+import com._4paradigm.predictor.brpc.client.PredictorBrpcClient;
+import com._4paradigm.predictor.utils.Schema;
 import com._4paradigm.prophet.rest.client.HttpExecution;
 import com._4paradigm.prophet.rest.client.SyncHttpOperator;
 import com._4paradigm.prophet.rest.model.Response;
+import com.fasterxml.jackson.core.type.TypeReference;
 import lombok.Data;
 import org.apache.commons.lang3.StringUtils;
 
+import java.util.List;
 import java.util.regex.Pattern;
 
 import static com._4paradigm.prophet.rest.utils.Serdes.deserializeFromJson;
@@ -25,10 +30,9 @@ public class ProfileConfig {
     private String accessToken = "";
     private long sleep = 0;
     private String outputPath = "/tmp/score";
-    private String arch = "http";
+    private String arch = "rest";
     private boolean firstLineSchema = false;
-    private Schema[] schemas;
-    private boolean forever = false;
+    private List<Schema> schemas;
     private boolean async = false;
     private String delimiter = "\t";
 
@@ -53,31 +57,29 @@ public class ProfileConfig {
         if (StringUtils.isNotBlank(arch)) pc.setArch(arch);
         String fls = System.getProperty("firstLineSchema");
         if (StringUtils.isNotBlank(fls)) pc.setFirstLineSchema(Boolean.parseBoolean(fls));
-        String schemaJson = System.getProperty("schemaJson");
-        if (StringUtils.isNotBlank(schemaJson)) {
-            if (!JSON_PATTERN.matcher(schemaJson).matches()) {
-                schemaJson = getContent(schemaJson);
+        if (StringUtils.equalsIgnoreCase("rest", arch)) {
+            String schemaJson = System.getProperty("schemaJson");
+            if (StringUtils.isNotBlank(schemaJson)) {
+                if (!JSON_PATTERN.matcher(schemaJson).matches()) {
+                    schemaJson = getContent(schemaJson);
+                }
+                pc.setSchemas(deserializeFromJson(schemaJson, new TypeReference<List<Schema>>() {
+                }));
+            } else {
+                String des = url.replace("predict", "description");
+                pc.setSchemas(HttpExecution.get(des).executeForJson(new SyncHttpOperator(1, 1),
+                        PredictorDescriptionResponse.class).getData().getSchemaTerms());
             }
-            pc.setSchemas(deserializeFromJson(schemaJson, Schema[].class));
-        } else {
-            String des = url.replace("predict", "description");
-            pc.setSchemas(HttpExecution.get(des).executeForJson(new SyncHttpOperator(1, 1),
-                    PredictorDescriptionResponse.class).getData().schemaTerms);
+        } else if (StringUtils.equalsIgnoreCase("brpc", arch)) {
+            pc.setSchemas(new PredictorBrpcClient(url).getSchemas());
         }
         String delimiter = System.getProperty("delimiter");
         if (StringUtils.isNotBlank(delimiter)) pc.setDelimiter(delimiter);
-        String forever = System.getProperty("forever");
-        if (StringUtils.isNotBlank(forever)) pc.forever = Boolean.parseBoolean(forever);
         String async = System.getProperty("async");
         if (StringUtils.isNotBlank(async)) pc.async = Boolean.parseBoolean(async);
         return pc;
     }
 
     private static class PredictorDescriptionResponse extends Response<PredictorDescription> {}
-
-    @Data
-    private static class PredictorDescription {
-        private Schema[] schemaTerms;
-    }
 
 }

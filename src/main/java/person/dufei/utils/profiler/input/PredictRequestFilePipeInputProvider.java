@@ -2,17 +2,12 @@ package person.dufei.utils.profiler.input;
 
 import com._4paradigm.predictor.PredictItem;
 import com._4paradigm.predictor.PredictRequest;
+import com._4paradigm.predictor.utils.Schema;
 import com._4paradigm.prophet.rest.pipe.io.PipeInputProvider;
 import com._4paradigm.prophet.rest.pipe.io.impl.QueuePipeInputProvider;
 import com.conversantmedia.util.concurrent.DisruptorBlockingQueue;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.entity.ByteArrayEntity;
-import org.apache.http.entity.ContentType;
-import person.dufei.utils.profiler.config.Schema;
 
 import java.io.BufferedReader;
 import java.io.FileInputStream;
@@ -20,36 +15,34 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.text.SimpleDateFormat;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 
-import static com._4paradigm.prophet.rest.utils.Serdes.serializeAsJsonBytes;
+import static com._4paradigm.prophet.rest.utils.Validator.validateCollectionNotEmptyContainsNoNull;
 import static com._4paradigm.prophet.rest.utils.Validator.validateIntPositive;
 import static com._4paradigm.prophet.rest.utils.Validator.validateObjectNotNull;
 import static com._4paradigm.prophet.rest.utils.Validator.validateStringNotBlank;
 
-public class PredictRequestFilePipeInputProvider implements PipeInputProvider<HttpPost>, Runnable {
+abstract class PredictRequestFilePipeInputProvider<T> implements PipeInputProvider<T>, Runnable {
 
-    private static final Map<String, Object> EMPTY = ImmutableMap.of();
     private static final SimpleDateFormat DSDF = new SimpleDateFormat("yyyy-MM-dd");
     private static final SimpleDateFormat TSDF = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
-    private final String uri;
+    final String uri;
     private final int batchSize;
     private final String delimiter;
     private final boolean isFirstLineSchema;
-    private final Schema[] schemas;
+    private final List<Schema> schemas;
     private final String accessToken;
-    private final PipeInputProvider<HttpPost> internal;
+    private final PipeInputProvider<T> internal;
     private final BufferedReader br;
 
     public PredictRequestFilePipeInputProvider(final String uri, final String fileName, final int batchSize, final String delimiter,
-                                               final boolean isFirstLineSchema, final Schema[] schemas, final String accessToken) {
+                                               final boolean isFirstLineSchema, final List<Schema> schemas, final String accessToken) {
         validateStringNotBlank(uri, "predictor uri");
         validateStringNotBlank(fileName, "file name");
         validateIntPositive(batchSize, "batch size");
         validateStringNotBlank(accessToken, "access token");
-        validateObjectNotNull(schemas, "schema array");
+        validateCollectionNotEmptyContainsNoNull(schemas, "schemas");
         this.uri = uri;
         this.batchSize = batchSize;
         this.delimiter = delimiter;
@@ -91,12 +84,12 @@ public class PredictRequestFilePipeInputProvider implements PipeInputProvider<Ht
     }
 
     @Override
-    public void offer(HttpPost payload) {
+    public void offer(T payload) {
         internal.offer(payload);
     }
 
     @Override
-    public HttpPost take() {
+    public T take() {
         return internal.take();
     }
 
@@ -116,26 +109,25 @@ public class PredictRequestFilePipeInputProvider implements PipeInputProvider<Ht
         if (br != null) br.close();
     }
 
-    private HttpPost convert(Schema[] schemas, List<String> lines, int startIndex) {
+    abstract T convert(List<Schema> schemas, List<String> lines, int startIndex);
+
+    PredictRequest convert2PR(List<Schema> schemas, List<String> lines, int startIndex) {
         PredictRequest pr = new PredictRequest();
         pr.setRequestId(UUID.randomUUID().toString());
         pr.setResultLimit(batchSize);
         pr.setAccessToken(accessToken);
-        pr.setCommonFeatures(EMPTY);
         List<PredictItem> pris = Lists.newArrayListWithCapacity(batchSize);
         pr.setRawInstances(pris);
         for (int i = 0; i < batchSize; i++) {
             PredictItem pi = new PredictItem();
             pi.setId(String.valueOf(startIndex + i));
-            Map<String, Object> features = Maps.newHashMapWithExpectedSize(schemas.length);
+            List<Object> features = Lists.newArrayListWithCapacity(schemas.size());
             String[] values = lines.get(i).split(delimiter, -1);
-            for (int j = 0; j < schemas.length; j++) features.put(schemas[j].getName(), subConvert(schemas[j], values[j]));
-            pi.setRawFeatures(features);
+            for (int j = 0; j < schemas.size(); j++) features.add(subConvert(schemas.get(j), values[j]));
+            pi.setRawFeaturesList(features);
             pris.add(pi);
         }
-        HttpPost post = new HttpPost(uri);
-        post.setEntity(new ByteArrayEntity(serializeAsJsonBytes(pr), ContentType.APPLICATION_JSON));
-        return post;
+        return pr;
     }
 
     private Object subConvert(Schema schema, String value) {

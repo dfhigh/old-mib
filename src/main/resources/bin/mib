@@ -2,11 +2,11 @@
 cur=$(cd `dirname $0`; pwd)
 cd $cur/..
 
-JAVA_CMD="java -cp ./conf:./bin:./mib-1.2.jar"
+JAVA_CMD="java -cp ./conf:./bin:./mib-1.3.jar"
 JAVA_ARGS=""
 MAIN=""
 
-ARGS=`getopt -o h:u:t:f:s:b:a:c:o:d: --long token:,file:,schema-json:,batch-size:,concurrency:,service:,operation:,endpoint:,status:,start:,end:,profile,log2stats,sleep:,output-path:,first-line-schema,forever,delimiter:,async,help,kafka,kafka-endpoints:,kafka-topics:,parquet2text -- "$@"`
+ARGS=`getopt -o h:u:t:f:s:b:a:c:o:d: --long token:,file:,schema-json:,batch-size:,concurrency:,service:,operation:,endpoint:,status:,start:,end:,profile,log2stats,sleep:,output-path:,first-line-schema,delimiter:,async,arch:,help,kafka,kafka-endpoints:,kafka-topics:,parquet2text -- "$@"`
 if [ $? != 0 ]; then
     echo "terminating..."
     exit 1
@@ -29,8 +29,8 @@ while [ -n "$1" ]; do
         -d|--delimiter) JAVA_ARGS="$JAVA_ARGS -Ddelimiter=$2" ; shift 2 ;;
         -h|--help) JAVA_ARGS="$JAVA_ARGS -Dhelp=true" ; shift 1 ;;
         --first-line-schema) JAVA_ARGS="$JAVA_ARGS -DfirstLineSchema=true" ; shift 1 ;;
-        --forever) JAVA_ARGS="$JAVA_ARGS -Dforever=true" ; shift 1 ;;
         --async) JAVA_ARGS="$JAVA_ARGS -Dasync=true" ; shift 1 ;;
+        --arch) JAVA_ARGS="$JAVA_ARGS -Darch=$2" ; shift 2 ;;
         --service) JAVA_ARGS="$JAVA_ARGS -Dservice=$2" ; shift 2 ;;
         --operation) JAVA_ARGS="$JAVA_ARGS -Doperation=$2" ; shift 2 ;;
         --endpoint) JAVA_ARGS="$JAVA_ARGS -Dendpoint=$2" ; shift 2 ;;
