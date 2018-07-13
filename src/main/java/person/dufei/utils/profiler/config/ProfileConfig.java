@@ -57,20 +57,19 @@ public class ProfileConfig {
         if (StringUtils.isNotBlank(arch)) pc.setArch(arch);
         String fls = System.getProperty("firstLineSchema");
         if (StringUtils.isNotBlank(fls)) pc.setFirstLineSchema(Boolean.parseBoolean(fls));
-        if (StringUtils.equalsIgnoreCase("rest", arch)) {
+        if (StringUtils.equalsIgnoreCase("rest", pc.arch)) {
             String schemaJson = System.getProperty("schemaJson");
             if (StringUtils.isNotBlank(schemaJson)) {
                 if (!JSON_PATTERN.matcher(schemaJson).matches()) {
                     schemaJson = getContent(schemaJson);
                 }
-                pc.setSchemas(deserializeFromJson(schemaJson, new TypeReference<List<Schema>>() {
-                }));
+                pc.setSchemas(deserializeFromJson(schemaJson, new TypeReference<List<Schema>>(){}));
             } else {
                 String des = url.replace("predict", "description");
                 pc.setSchemas(HttpExecution.get(des).executeForJson(new SyncHttpOperator(1, 1),
                         PredictorDescriptionResponse.class).getData().getSchemaTerms());
             }
-        } else if (StringUtils.equalsIgnoreCase("brpc", arch)) {
+        } else if (StringUtils.equalsIgnoreCase("brpc", pc.arch)) {
             pc.setSchemas(new PredictorBrpcClient(url).getSchemas());
         }
         String delimiter = System.getProperty("delimiter");

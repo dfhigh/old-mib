@@ -22,6 +22,9 @@ public class BrpcPredictorProfiler extends SimpleProfiler<PredictRequest> {
         super(inputProvider, concurrency);
         validateStringNotBlank(endpoints, "service endpoints");
         validateCollectionNotEmptyContainsNoNull(schemas, "schemas");
-        setConsumer(new SyncPredictorBrpcExecutor(new PredictorBrpcClient(endpoints, schemas), handler, latencyQueue::offer));
+        setConsumer(new SyncPredictorBrpcExecutor(new PredictorBrpcClient(endpoints, schemas), handler, latency -> {
+            latencyQueue.offer(latency);
+            requestsCompleted.incrementAndGet();
+        }));
     }
 }
