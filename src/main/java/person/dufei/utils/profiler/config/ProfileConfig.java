@@ -1,7 +1,9 @@
 package person.dufei.utils.profiler.config;
 
 import com._4paradigm.predictor.PredictorDescription;
+import com._4paradigm.predictor.brpc.client.EurekaPredictorBrpcClient;
 import com._4paradigm.predictor.brpc.client.PredictorBrpcClient;
+import com._4paradigm.predictor.client.PredictorClient;
 import com._4paradigm.predictor.utils.Schema;
 import com._4paradigm.prophet.rest.client.HttpExecution;
 import com._4paradigm.prophet.rest.client.SyncHttpOperator;
@@ -34,7 +36,10 @@ public class ProfileConfig {
     private boolean firstLineSchema = false;
     private List<Schema> schemas;
     private boolean async = false;
+    private boolean eureka = false;
     private String delimiter = "\t";
+    private String zkPath;
+    private PredictorClient predictorClient;
 
     private ProfileConfig() {}
 
@@ -57,6 +62,15 @@ public class ProfileConfig {
         if (StringUtils.isNotBlank(arch)) pc.setArch(arch);
         String fls = System.getProperty("firstLineSchema");
         if (StringUtils.isNotBlank(fls)) pc.setFirstLineSchema(Boolean.parseBoolean(fls));
+        String eureka = System.getProperty("eureka");
+        if (StringUtils.isNotBlank(eureka)) pc.eureka = Boolean.parseBoolean(eureka);
+        if (pc.eureka) {
+            String zkPath = System.getProperty("zkPath");
+            if (StringUtils.isBlank(zkPath)) {
+                throw new IllegalArgumentException("zk path can't be blank");
+            }
+            pc.zkPath = zkPath;
+        }
         if (StringUtils.equalsIgnoreCase("rest", pc.arch)) {
             String schemaJson = System.getProperty("schemaJson");
             if (StringUtils.isNotBlank(schemaJson)) {
@@ -70,7 +84,12 @@ public class ProfileConfig {
                         PredictorDescriptionResponse.class).getData().getSchemaTerms());
             }
         } else if (StringUtils.equalsIgnoreCase("brpc", pc.arch)) {
-            pc.setSchemas(new PredictorBrpcClient(url).getSchemas());
+            if (pc.eureka) {
+                pc.predictorClient = new EurekaPredictorBrpcClient(url, pc.zkPath);
+            } else {
+                pc.predictorClient = new PredictorBrpcClient(url);
+            }
+            pc.schemas = pc.predictorClient.describe().getSchemaTerms();
         }
         String delimiter = System.getProperty("delimiter");
         if (StringUtils.isNotBlank(delimiter)) pc.setDelimiter(delimiter);

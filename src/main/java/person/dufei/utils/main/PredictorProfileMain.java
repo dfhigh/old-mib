@@ -74,7 +74,7 @@ public class PredictorProfileMain {
                         sleepQuietly(100);
                     }
                 });
-            }, pc.getUrl(), pc.getSchemas(), pc.getConcurrency());
+            }, pc.getPredictorClient(), pc.getConcurrency());
         } else {
             throw new IllegalArgumentException("unknown service arch " + pc.getArch());
         }

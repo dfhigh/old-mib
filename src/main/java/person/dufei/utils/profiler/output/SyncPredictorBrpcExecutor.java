@@ -2,7 +2,7 @@ package person.dufei.utils.profiler.output;
 
 import com._4paradigm.predictor.PredictRequest;
 import com._4paradigm.predictor.PredictResponse;
-import com._4paradigm.predictor.brpc.client.PredictorBrpcClient;
+import com._4paradigm.predictor.client.PredictorClient;
 import com._4paradigm.prophet.rest.pipe.io.PipeOutputConsumer;
 
 import java.util.concurrent.atomic.AtomicLong;
@@ -12,12 +12,12 @@ import static com._4paradigm.prophet.rest.utils.Validator.validateObjectNotNull;
 
 public class SyncPredictorBrpcExecutor implements PipeOutputConsumer<PredictRequest, Void> {
 
-    private final PredictorBrpcClient predictor;
+    private final PredictorClient predictor;
     private final AtomicLong consumed;
     private final Consumer<PredictResponse> handler;
     private final Consumer<Long> latencyHandler;
 
-    public SyncPredictorBrpcExecutor(final PredictorBrpcClient predictor, final Consumer<PredictResponse> handler,
+    public SyncPredictorBrpcExecutor(final PredictorClient predictor, final Consumer<PredictResponse> handler,
                                      final Consumer<Long> latencyHandler) {
         validateObjectNotNull(predictor, "predictor client");
         validateObjectNotNull(handler, "response handler");
