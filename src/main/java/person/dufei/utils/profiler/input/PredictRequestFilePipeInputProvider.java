@@ -114,11 +114,11 @@ abstract class PredictRequestFilePipeInputProvider<T> implements PipeInputProvid
     PredictRequest convert2PR(List<Schema> schemas, List<String> lines, int startIndex) {
         PredictRequest pr = new PredictRequest();
         pr.setRequestId(UUID.randomUUID().toString());
-        pr.setResultLimit(batchSize);
+        pr.setResultLimit(lines.size());
         pr.setAccessToken(accessToken);
-        List<PredictItem> pris = Lists.newArrayListWithCapacity(batchSize);
+        List<PredictItem> pris = Lists.newArrayListWithCapacity(lines.size());
         pr.setRawInstances(pris);
-        for (int i = 0; i < batchSize; i++) {
+        for (int i = 0; i < lines.size(); i++) {
             PredictItem pi = new PredictItem();
             pi.setId(String.valueOf(startIndex + i));
             List<Object> features = Lists.newArrayListWithCapacity(schemas.size());
